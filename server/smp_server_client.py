@@ -7,8 +7,8 @@ Created on 9. nov 2017
 import threading
 from common import smp_network
 from common.smp_common import LOG, SMPSocketClosedException
-from common.smp_network import MSG, RSP, smpnet_send_msg, smpnet_recv_head, \
-	smpnet_recv_data
+from common.smp_network import MSG, RSP, \
+	smpnet_send_msg, smpnet_recv_head, smpnet_recv_data
 import socket
 
 BUFFER_SIZE = 1024
@@ -95,7 +95,15 @@ class SMPServerClient(threading.Thread):
 
 		# Note: MSG.BYE is handled in the receiving loop
 
-		LOG.critical('Need to handle received message: {}'.format((mhead, dlen, msg)))
+		if mhead == MSG.REQ_GLIST:
+			gilist = self._server.get_game_info_list()
+			# TODO: serialize gilist
+			if self._sock:
+				smpnet_send_msg(self._sock, RSP.GLIST, str(gilist))
+				LOG.critical('Game list is not properly serialized')
+
+		else:
+			LOG.critical('Need to handle received message: {}'.format((mhead, dlen, msg)))
 
 
 

@@ -103,3 +103,7 @@ ENV/
 # Eclpise project files
 .project
 .pydevproject
+.settings
+
+# OSX directory file
+.DS_Store

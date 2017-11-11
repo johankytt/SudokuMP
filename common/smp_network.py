@@ -22,6 +22,7 @@ class MSG():
 	BYE = 0x00  # Disconnect
 	CID = 0x01  # Send client ID
 	REQ_GLIST = 0x02  # Request game list
+	REQ_NEW_GAME = 0x03  # Create new game
 
 
 

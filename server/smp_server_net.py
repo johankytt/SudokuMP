@@ -8,6 +8,7 @@ import socket
 from smp_server_client import SMPServerClient
 from common.smp_common import LOG
 from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
+import threading
 
 
 
@@ -23,8 +24,10 @@ class SMPServerNet():
 	_lport = None
 	_next_cid = 1
 
+	client_lock = None
 
-	def __init__(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, clist=[], server=None):
+
+	def __init__(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, clist, server):
 		'''
 		Constructor. Does basic configuration of the network interface.
 		'''
@@ -32,6 +35,7 @@ class SMPServerNet():
 		self._lport = port
 		self._clients = clist
 		self._server = server
+		self.client_lock = threading.Lock()
 
 
 	def start(self):
@@ -56,9 +60,11 @@ class SMPServerNet():
 				(csock, addr) = self._lsock.accept()
 				LOG.info('New connection from {}, cid={}'.format(addr, self._next_cid))
 				c = SMPServerClient(self._next_cid, csock, self._server)
-				self._clients.append(c)
+				with self.client_lock:
+					self._clients.append(c)
+					self._next_cid += 1
 				c.start()
-				self._next_cid += 1
+
 
 		except KeyboardInterrupt:
 			LOG.info('Keyboard interrupt received. Stopping server.')
@@ -95,8 +101,9 @@ class SMPServerNet():
 		# Notify all clients to disconnect
 		# Clients are removed from the list using the client-initiated disconnect routine
 		LOG.debug('Notifying all clients to disconnect')
-		for c in self._clients:
-			c.notify_disconnect()
+		with self.client_lock:
+			for c in self._clients:
+				c.notify_disconnect()
 
 		# Wait until all clients have disconnected
 		while self._clients:
@@ -108,5 +115,6 @@ class SMPServerNet():
 			if c.is_alive():
 				LOG.warn('Client {} did not disconnect. Killing the connection.'.format(c))
 				c.force_disconnect()
-				if c in self._clients:
-					self._clients.remove(c)
+				with self.client_lock:
+					if c in self._clients:
+						self._clients.remove(c)

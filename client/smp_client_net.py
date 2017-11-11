@@ -97,6 +97,7 @@ class SMPClientNet(threading.Thread):
 			self._sock.close()
 
 
+
 	#### NETWORK PROTOCOL HANDLING ####
 
 	def handle_message(self, mhead, dlen, data):
@@ -113,3 +114,13 @@ class SMPClientNet(threading.Thread):
 		else:
 			LOG.critical('Need to handle received message: {}'.format((mhead, dlen, data)))
 
+
+
+	def req_new_game(self):
+		if self._sock:
+			smpnet_send_msg(self._sock, MSG.REQ_NEW_GAME, '')
+
+
+	def req_game_info_list(self):
+		if self._sock:
+			smpnet_send_msg(self._sock, MSG.REQ_GLIST, '')

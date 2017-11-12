@@ -12,10 +12,9 @@ class SMPServerGame():
 	classdocs
 	'''
 
+	_gid = 0  # Unique game id
 	_game_state = None  # An instance of SMPGameState
 
 
-	def __init__(self):
-		'''
-		Constructor
-		'''
+	def __init__(self, gid):
+		self._gid = gid

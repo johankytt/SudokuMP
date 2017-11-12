@@ -18,6 +18,9 @@ class SMPGameState():
 	# The game starts when all players have joined
 	_scores = {}  # A dict of player's scores. Indexed by client id.
 
+	_start_time = 0
+	_end_time = 0
+
 
 	def __init__(self, gid):
 		'''
@@ -34,3 +37,10 @@ class SMPGameState():
 		gi['max_players'] = self._max_player_count
 		gi['scores'] = copy.deepcopy(self._scores)
 		return gi
+
+
+	def has_started(self):
+		return self._start_time > 0
+
+	def has_ended(self):
+		return self._end_time > self._start_time

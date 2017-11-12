@@ -122,11 +122,14 @@ def smpnet_recv_data(sock, dlen):
 	@raise SMPSocketClosedException
 	'''
 
-	d = sock.recv(dlen)
+	if sock:
+		d = sock.recv(dlen)
+	else:
+		d = ''
 
 	# Check if socket has been closed
 	if len(d) == 0:
-		raise SMPSocketClosedException()
+		raise SMPSocketClosedException('Network receive: socket closed.')
 
 	if dlen != len(d):
 		LOG.critical('Received data length does not match indicated data length: ' +

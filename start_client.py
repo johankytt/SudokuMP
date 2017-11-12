@@ -15,12 +15,10 @@ if __name__ == '__main__':
 
 	# THIS IS ALL FOR TESTING. APPEND OR REPLACE AS NEEDED.
 
-	LOG.info('Starting SudokuMP server')
+	LOG.info('Starting SudokuMP client')
 	client = SMPClient()
 	client.connect()
 
-	sleep(5)
-
+	sleep(3)
 	client.disconnect(True)
-
 	LOG.info('All done')

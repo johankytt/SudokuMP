@@ -27,7 +27,7 @@ class SMPServerNet():
 	client_lock = None
 
 
-	def __init__(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, clist, server):
+	def __init__(self, server, clist, addr=DEFAULT_HOST, port=DEFAULT_PORT,):
 		'''
 		Constructor. Does basic configuration of the network interface.
 		'''

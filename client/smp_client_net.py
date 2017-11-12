@@ -42,11 +42,10 @@ class SMPClientNet(threading.Thread):
 			self.start()
 
 		except socket.error as e:
-			LOG.error('Socket error: {}'.format(e))
-
-		finally:
+			LOG.error('SMPClientNet.connect() socket error: {}'.format(e))
 			self._sock.close()
 			self._sock = None
+
 
 
 

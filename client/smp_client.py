@@ -28,7 +28,10 @@ class SMPClient():
 
 
 	def disconnect(self, blocking=False):
-		''' For testing. Should be appended/replaced as needed. '''
+		'''
+		For testing. Should be appended/replaced as needed.
+		@param blocking, bool, If blocking, then this function won't return until the clientnet thread has died
+		'''
 
 		LOG.info('SMPClient disconnect')
 		self._client_net.disconnect()

@@ -9,6 +9,7 @@ from common.smp_common import LOG
 from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 import threading
 from server.smp_server_game import SMPServerGame
+from common import smp_network
 
 class SMPServer():
 	'''
@@ -29,7 +30,7 @@ class SMPServer():
 		Constructor
 		'''
 		self._server_net = SMPServerNet(server=self, clist=self._clients, addr=laddr, port=lport)
-		self._lock = threading.Lock()
+		self._game_lock = threading.Lock()
 
 
 	def start(self):
@@ -46,7 +47,7 @@ class SMPServer():
 		need to be cleaned up 
 		'''
 
-		LOG.info('Cleaning up after client {}'.format(client))
+		LOG.critical('Client cleanup UNIMPLEMENTED. Client {}.'.format(client))
 		with self._server_net.client_lock:
 			self._clients.remove(client)
 			# TODO: implement game clean up
@@ -67,10 +68,15 @@ class SMPServer():
 		with self._game_lock:
 			self._games.remove(game)
 
-	def get_game_info_list(self):
-		# TODO: implement
-		# TODO: game info list must be serializable
-		gilist = []
+	def serialize_game_info_list(self):
+		''' Returns a list of serialised game infos '''
+		# [<4:uint32:GI length><GameInfo>]*
+
+		gilstr = ''
 		with self._game_lock:
 			for g in self._games:
-				gilist.append(g.get_game_info())
+				gistr = g.serialize_game_info()
+				gilstr += smp_network.pack_uint32(len(gistr))
+				gilstr += gistr
+
+		return gilstr

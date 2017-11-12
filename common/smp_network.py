@@ -21,8 +21,9 @@ class MSG():
 
 	BYE = 0x00  # Disconnect
 	CID = 0x01  # Send client ID
-	REQ_GLIST = 0x02  # Request game list
-	REQ_NEW_GAME = 0x03  # Create new game
+	CNAME = 0x02
+	REQ_GLIST = 0x10  # Request game list
+	REQ_GNEW = 0x11  # Create new game
 
 
 
@@ -34,7 +35,7 @@ class RSP():
 	MAYBE THIS DOESN'T NEED TO BE SEPARATE FROM MSG
 	'''
 
-	GLIST = 0x10  # Send game list
+	GLIST = 0x80  # Send game list
 
 
 # Utility functions
@@ -108,7 +109,8 @@ def smpnet_recv_head(sock):
 
 	# Check if socket has been closed
 	if len(m) == 0:
-		raise SMPSocketClosedException()
+		LOG.debug('smpnet_recv_header: no data received, raising exception')
+		raise SMPSocketClosedException('smpnet recv header: no data received.')
 
 	return unpack_message_head(m)
 
@@ -122,6 +124,9 @@ def smpnet_recv_data(sock, dlen):
 	@raise SMPSocketClosedException
 	'''
 
+	if dlen == 0:
+		return ''
+
 	if sock:
 		d = sock.recv(dlen)
 	else:
@@ -129,7 +134,8 @@ def smpnet_recv_data(sock, dlen):
 
 	# Check if socket has been closed
 	if len(d) == 0:
-		raise SMPSocketClosedException('Network receive: socket closed.')
+		LOG.debug('smpnet_recv_data: no data received, raising exception')
+		raise SMPSocketClosedException('smpnet recv data: no data received')
 
 	if dlen != len(d):
 		LOG.critical('Received data length does not match indicated data length: ' +

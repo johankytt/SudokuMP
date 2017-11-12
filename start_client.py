@@ -17,8 +17,11 @@ if __name__ == '__main__':
 
 	LOG.info('Starting SudokuMP client')
 	client = SMPClient()
+	client.set_cname('MyName MySurname')
 	client.connect()
+	client._client_net.req_game_info_list()
 
 	sleep(3)
+
 	client.disconnect(True)
 	LOG.info('All done')

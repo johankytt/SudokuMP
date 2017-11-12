@@ -7,8 +7,6 @@ from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 from client.smp_client_net import SMPClientNet
 from common.smp_common import LOG
 
-from Tkinter import *
-
 
 class SMPClient():
     '''
@@ -23,7 +21,6 @@ class SMPClient():
 
     def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT):
         ''' For testing. Should be appended/replaced as needed. '''
-
         LOG.info('SMPClient connecting to {}.'.format((addr, port)))
         if not self._cname or len(self._cname) == 0:
             LOG.warn('Connecting with no player name set')
@@ -72,38 +69,3 @@ class SMPClient():
         LOG.critical('SMPClient.game_list_received() UNIMPLEMENTED')
         LOG.debug('SMPClient received GLIST: {}'.format(gilist))
 
-    def load_settings_ui(self, root):
-        root.title('Sudoku Configuration Panel')
-        root.geometry('{}x{}'.format(460, 350))
-
-        # create all of the main containers
-        top_frame = Frame(root, width=450, height=50, pady=3)
-
-        top_frame.grid(row=0, sticky="ew")
-
-        # create the widgets for the top frame
-        lbl_title = Label(top_frame, text='----------Connect to a server and start your game----------')
-        lbl_ip = Label(top_frame, text='Server IP:')
-        lbl_port = Label(top_frame, text='Port:')
-        entry_ip = Entry(top_frame)
-        entry_port = Entry(top_frame)
-
-        def button_click_connect_server():
-            self.connect(entry_ip.get(), int(entry_port.get()))
-            #self.connect("127.0.0.1", 8080)
-        button_connect = Button(top_frame, text="Connect to server", command= button_click_connect_server)
-
-        # layout the widgets in the top frame
-        lbl_title.grid(row=0, columnspan=4)
-        lbl_ip.grid(row=1, column=0)
-        lbl_port.grid(row=1, column=2)
-        entry_ip.grid(row=1, column=1)
-        entry_port.grid(row=1, column=3)
-        button_connect.grid(row=1, column=4)
-
-    def __init__(self, root):
-        self.load_settings_ui(root)
-
-root = Tk()
-my_gui = SMPClient(root)
-root.mainloop()

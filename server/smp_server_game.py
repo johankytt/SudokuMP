@@ -15,12 +15,13 @@ class SMPServerGame():
 
 	_gid = 0  # Unique game id
 	_game_state = None  # An instance of SMPGameState
-	_clients = []  # A list of clients who have joined this game
+	_clients = None  # A list of clients who have joined this game
 	_client_lock = None
 
 	def __init__(self, gid, max_players):
 		self._gid = gid
 		self._game_state = SMPGameState(gid, max_players)
+		self._clients = []
 		self._client_lock = threading.Lock()
 
 

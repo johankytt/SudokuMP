@@ -28,5 +28,7 @@ if __name__ == '__main__':
 #
 # 	client.disconnect(True)
 
+	app.aboutToQuit.connect(client.exit)
 	app.exec_()
+
 	LOG.info('All done')

@@ -124,7 +124,6 @@ class SMPClientNet(threading.Thread):
 
 		elif mhead == RSP.GLIST:
 			LOG.debug('RSP.GLIST received')
-			LOG.debug('SMPClientNet received GLIST: ' + data)
 			gilist = self.unserialize_game_info_list(data)
 			self._client.game_list_received(gilist)
 

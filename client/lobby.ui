@@ -171,12 +171,36 @@
       </widget>
      </item>
      <item>
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="refreshGLButton">
        <property name="enabled">
         <bool>false</bool>
        </property>
        <property name="text">
         <string>Refresh Game List</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="joinGameButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Join Selected Game</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="Line" name="line_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -211,6 +235,9 @@
        </item>
        <item>
         <widget class="QLineEdit" name="maxPlayersField">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="maximumSize">
           <size>
            <width>100</width>

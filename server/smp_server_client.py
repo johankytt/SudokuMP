@@ -126,6 +126,7 @@ class SMPServerClient(threading.Thread):
 	# PROTOCOL HANDLERS
 	def join_game_handler(self, msg):
 		gid = smp_network.unpack_uint32(msg)
+		LOG.debug('ServClient: Joining game {}'.format(gid))
 		if self._server.join_game(gid, self):
 			smpnet_send_msg(self._sock, RSP.GJOIN, msg)
 		else:

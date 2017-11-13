@@ -17,7 +17,7 @@ class SMPServerNet():
 	Class implementing the network interface of the server
 	'''
 
-	_clients = []  # A reference to the main server client list
+	_clients = None  # A reference to the main server client list
 	_server = None
 	_lsock = None
 	_laddr = None

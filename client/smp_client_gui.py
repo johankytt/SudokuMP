@@ -45,10 +45,17 @@ class SMPClientGui(QObject):
 		self._lobby_gui.playerNameField.textChanged.connect(self.connection_field_changed)
 		self._lobby_gui.addressField.textChanged.connect(self.connection_field_changed)
 		self._lobby_gui.portField.textChanged.connect(self.connection_field_changed)
+
 		self._lobby_gui.connectButton.clicked.connect(self.connect_server)
 		self._lobby_gui.disconnectButton.clicked.connect(self._client.disconnect)
+
+		self._lobby_gui.refreshGLButton.clicked.connect(self._client.get_game_list)
+
 		self._lobby_gui.newGameButton.clicked.connect(self.create_game)
 		self._lobby_gui.maxPlayersField.textChanged.connect(self.max_players_changed)
+
+
+
 
 	############### ACCESS / UTILITY FUNCTIONS ###############
 
@@ -66,6 +73,9 @@ class SMPClientGui(QObject):
 		self._lobby_gui.portField.setEnabled(not state)
 		self._lobby_gui.connectButton.setEnabled(not state)
 		self._lobby_gui.disconnectButton.setEnabled(state)
+		self._lobby_gui.refreshGLButton.setEnabled(state)
+		self._lobby_gui.joinGameButton.setEnabled(state)
+		self._lobby_gui.maxPlayersField.setEnabled(state)
 
 
 	######### EXTERNAL NOTIFICATION RECEIVERS ########

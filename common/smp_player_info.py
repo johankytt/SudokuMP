@@ -7,7 +7,7 @@ from common.smp_common import SMPException
 from common import smp_network
 
 
-class SMPPlayerInfo():
+class SMPPlayerInfo(object):
 	'''
 	Representation of player info in a game session
 	'''
@@ -21,6 +21,9 @@ class SMPPlayerInfo():
 		self.set_name(name)
 		self._cid = cid
 		self._score = score
+
+	def __str__(self):
+		return 'SMPPlayerInfo[cid={}, cname={}, score={}]'.format(self._cid, self._cname, self._score)
 
 
 	def set_name(self, name):
@@ -44,6 +47,7 @@ class SMPPlayerInfo():
 		pistr += smp_network.pack_uint8(self._score)
 		pistr += smp_network.pack_uint8(len(self._cname))
 		pistr += self._cname
+		return pistr
 
 
 	@staticmethod

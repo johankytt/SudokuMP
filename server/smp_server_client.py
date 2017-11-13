@@ -25,6 +25,7 @@ class SMPServerClient(threading.Thread):
 	_server = None  # Reference to the main server object
 	_cid = 0  # Unique client id created by the server. 0 = not assigned / invalid.
 	_pinfo = None  # An instance of SMPPlayerInfo
+	_game = None  # Reference to the SMPServerGame that the client has joined
 	_bye = False  # Set to true when the server forcefully disconnects the client
 
 	def __init__(self, cid, client_sock, server):
@@ -32,6 +33,7 @@ class SMPServerClient(threading.Thread):
 		self._cid = cid
 		self._sock = client_sock
 		self._server = server
+		self._pinfo = SMPPlayerInfo(cid)
 
 	def __str__(self):
 		return 'SMPServerClient:{}'.format(self._cid)
@@ -102,24 +104,35 @@ class SMPServerClient(threading.Thread):
 		if mhead == MSG.CNAME:
 			LOG.info('MSG.CNAME received')
 			try:
-				self._pinfo = SMPPlayerInfo(self._cid, msg)
+				self._pinfo.set_name(msg)
 			except SMPException:
-				self._pinfo = SMPPlayerInfo(self._cid, msg[:255])
+				self._pinfo.set_name(msg[:255])
 				LOG.warning('Too long player name given. Truncated to 255.')
-
-		elif mhead == MSG.REQ_GNEW:
-			LOG.info('MSG.REQ_GNEW received')
-			self._server.create_game(smp_network.unpack_uint8(msg))
 
 		elif mhead == MSG.REQ_GLIST:
 			LOG.info('MSG.REQ_GLIST received')
 			self.send_game_info_list()
 
+		elif mhead == MSG.REQ_GNEW:
+			LOG.info('MSG.REQ_GNEW received')
+			gid = self._server.create_game(smp_network.unpack_uint8(msg))
+			self.join_game_handler(smp_network.pack_uint32(gid))
+
 		else:
 			LOG.critical('Need to handle received message: {}'.format((mhead, dlen, msg)))
 
 
+
 	# PROTOCOL HANDLERS
+	def join_game_handler(self, msg):
+		gid = smp_network.unpack_uint32(msg)
+		if self._server.join_game(gid, self):
+			smpnet_send_msg(self._sock, RSP.GJOIN, msg)
+		else:
+			smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
+		LOG.critical('Game join handler partially implemented')
+
+
 
 
 
@@ -135,3 +148,4 @@ class SMPServerClient(threading.Thread):
 		''' Sends information about all available games to the client '''
 		smpnet_send_msg(self._sock, RSP.GLIST, self._server.serialize_game_info_list())
 		LOG.debug('Sent game info')
+

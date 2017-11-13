@@ -55,18 +55,33 @@ class SMPServer():
 
 	### GAME RELATED FUNCTIONS ###
 	def create_game(self, max_players):
+		LOG.critical('New game creation requested. Improve implementation.')
 		with self._game_lock:
-			g = SMPServerGame(self._next_gid)
+			g = SMPServerGame(self._next_gid, max_players)
+			LOG.debug('SMPServer: New game created, {}'.format(g._gid))
 			self._next_gid += 1
-			# TODO: implement game creation
-			LOG.critical('New game creation requested. Not implemented yet.')
 			self._games.append(g)
-			return g
+			return g._gid
 
 	def destroy_game(self, game):
 		# TODO: Clean up the game
 		with self._game_lock:
 			self._games.remove(game)
+
+	def join_game(self, gid, client):
+		LOG.critical('Join game requested. UNIMPLEMENTED')
+		with self._game_lock:
+			for g in self._games:
+				if g._gid == gid:
+					if g.add_player(client):
+						return True
+		return False
+
+
+	def leave_game(self, client):
+		LOG.critical('Leave game requested. UNIMPLEMENTED')
+
+
 
 	def serialize_game_info_list(self):
 		''' Returns a list of serialised game infos '''

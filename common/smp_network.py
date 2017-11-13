@@ -24,6 +24,7 @@ class MSG():
 	CNAME = 0x02
 	REQ_GLIST = 0x10  # Request game list
 	REQ_GNEW = 0x11  # Create new game
+	REQ_GJOIN = 0x12  # Request to join a game
 
 
 
@@ -36,6 +37,7 @@ class RSP():
 	'''
 
 	GLIST = 0x80  # Send game list
+	GJOIN = 0x81  # Confirm game joining
 
 
 # Utility functions

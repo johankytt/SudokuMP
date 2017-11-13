@@ -7,6 +7,7 @@ Created on 9. nov 2017
 from common import smp_network
 from common.smp_player_info import SMPPlayerInfo
 from common.smp_puzzle import SMPPuzzle
+import threading
 
 
 class SMPGameState():
@@ -21,6 +22,7 @@ class SMPGameState():
 	_puzzle = None  # An instance of SMPPuzzle
 	_max_player_count = 0  # Max number of players.
 	_pinfo = []  # A list of SMPPlayerInfo objects
+	_pinfo_lock = None
 	_start_time = 0
 	_end_time = 0
 
@@ -33,11 +35,23 @@ class SMPGameState():
 		self._gid = gid
 		self._max_player_count = max_players
 		self._puzzle = SMPPuzzle.get_new_puzzle()
-
+		self._pinfo_lock = threading.Lock()
 
 
 	def add_player(self, player_info):
-		self._pinfo.append(player_info)
+		# player_info must be a reference to SMPServerClient._pinfo
+
+		with self._pinfo_lock:
+			if len(self._pinfo) < self._max_player_count:
+				self._pinfo.append(player_info)
+				return True
+			else:
+				return False
+
+
+	def remove_player(self, player_info):
+		with self._pinfo_lock:
+			self._pinfo.remove(player_info)
 
 	def has_started(self):
 		return self._start_time > 0
@@ -45,7 +59,11 @@ class SMPGameState():
 	def has_ended(self):
 		return self._end_time > self._start_time
 
+	def set_start_time(self, t):
+		self._start_time = t
 
+	def set_end_time(self, t):
+		self._end_time = t
 
 
 	############### GAME INFO ##############

@@ -128,12 +128,18 @@ class SMPClientNet(threading.Thread):
 			gilist = self.unserialize_game_info_list(data)
 			self._client.game_list_received(gilist)
 
+		elif mhead == RSP.GJOIN:
+			LOG.debug('RSP.GJOIN received')
+			LOG.critical('Implement RSP.GJOIN handling')
 		else:
 			LOG.critical('Unhandled message: {}'.format((mhead, dlen, data)))
 
 
 
 	# PROTOCOL HANDLERS
+
+
+
 
 	def unserialize_game_info_list(self, data):
 		gilist = []

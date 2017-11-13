@@ -84,7 +84,14 @@ class SMPClient():
 		self._cname = cname
 
 
-	# Network notifications
+	# Network Requests
+	def create_game(self, max_players):
+		if self._client_net:
+			self._client_net.req_new_game(max_players)
+		else:
+			self._gui.show_notification('Not connected to a server.\nCan\'t create a new game.')
+
+	# Network Notifications
 
 	def game_list_received(self, gilist):
 		LOG.critical('SMPClient.game_list_received() UNIMPLEMENTED')

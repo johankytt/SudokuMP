@@ -7,6 +7,7 @@ from PySide.QtCore import QObject
 from PySide import QtUiTools
 from PySide.QtGui import QMessageBox, QIntValidator
 from common.smp_common import LOG
+from common import smp_network
 
 
 class SMPClientGui(QObject):
@@ -34,6 +35,10 @@ class SMPClientGui(QObject):
 
 	def gui_setup(self):
 		self._lobby_gui.portField.setValidator(QIntValidator(1000, 2 ** 16 - 1))
+		self._lobby_gui.maxPlayersField.setValidator(QIntValidator(1, 2 ** 8 - 1))
+
+		self._lobby_gui.addressField.setText(smp_network.DEFAULT_HOST)
+		self._lobby_gui.portField.setText(str(smp_network.DEFAULT_PORT))
 
 
 	def connect_signals(self):
@@ -42,6 +47,8 @@ class SMPClientGui(QObject):
 		self._lobby_gui.portField.textChanged.connect(self.connection_field_changed)
 		self._lobby_gui.connectButton.clicked.connect(self.connect_server)
 		self._lobby_gui.disconnectButton.clicked.connect(self._client.disconnect)
+		self._lobby_gui.newGameButton.clicked.connect(self.create_game)
+		self._lobby_gui.maxPlayersField.textChanged.connect(self.max_players_changed)
 
 	############### ACCESS / UTILITY FUNCTIONS ###############
 
@@ -89,6 +96,9 @@ class SMPClientGui(QObject):
 		else:
 			self._lobby_gui.connectButton.setEnabled(True)
 
+	def max_players_changed(self, text):
+		self._lobby_gui.newGameButton.setEnabled(len(text) > 0)
+
 
 	def connect_server(self):
 		cname = self._lobby_gui.playerNameField.text()
@@ -97,3 +107,8 @@ class SMPClientGui(QObject):
 
 		if self._client.connect(addr=addr, port=port, cname=cname):
 			self.set_connected(True)
+
+
+	def create_game(self):
+		max_players = int(self._lobby_gui.maxPlayersField.text())
+		self._client.create_game(max_players)

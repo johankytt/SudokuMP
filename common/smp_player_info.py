@@ -17,13 +17,26 @@ class SMPPlayerInfo():
 	_score = 0  # Current score
 
 
-	def __init__(self, cid, cname, score=0):
-		if len(cname) > 255:
-			raise SMPException('Player name is too long, max 255.')
-
+	def __init__(self, cid, name='', score=0):
+		self.set_name(name)
 		self._cid = cid
-		self._cname = cname
 		self._score = score
+
+
+	def set_name(self, name):
+		if len(name) > 255:
+			raise SMPException('Player name is too long, max 255.')
+		self._cname = name
+
+	def set_score(self, score):
+		self._score = score
+
+	def get_score(self):
+		return self._score
+
+	def get_name(self):
+		return self._cname
+
 
 
 	def serialize(self):

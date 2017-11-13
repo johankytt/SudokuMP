@@ -19,6 +19,7 @@ class SMPServerGame():
 
 	def __init__(self, gid):
 		self._gid = gid
+		self._game_state = SMPGameState(gid)
 
 
 	def serialize_game_info(self):

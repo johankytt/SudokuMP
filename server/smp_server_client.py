@@ -100,15 +100,19 @@ class SMPServerClient(threading.Thread):
 		# Note: MSG.BYE is handled in the receiving loop
 
 		if mhead == MSG.CNAME:
-			LOG.debug('MSG.CNAME received')
+			LOG.info('MSG.CNAME received')
 			try:
 				self._pinfo = SMPPlayerInfo(self._cid, msg)
 			except SMPException:
 				self._pinfo = SMPPlayerInfo(self._cid, msg[:255])
 				LOG.warning('Too long player name given. Truncated to 255.')
 
+		elif mhead == MSG.REQ_GNEW:
+			LOG.info('MSG.REQ_GNEW received')
+			self._server.create_game(smp_network.unpack_uint8(msg))
+
 		elif mhead == MSG.REQ_GLIST:
-			LOG.debug('MSG.REQ_GLIST received')
+			LOG.info('MSG.REQ_GLIST received')
 			self.send_game_info_list()
 
 		else:

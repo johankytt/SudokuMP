@@ -54,7 +54,7 @@ class SMPServer():
 
 
 	### GAME RELATED FUNCTIONS ###
-	def create_game(self):
+	def create_game(self, max_players):
 		with self._game_lock:
 			g = SMPServerGame(self._next_gid)
 			self._next_gid += 1

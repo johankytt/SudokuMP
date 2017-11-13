@@ -6,6 +6,7 @@ Created on 9. nov 2017
 
 from common import smp_network
 from common.smp_player_info import SMPPlayerInfo
+from common.smp_puzzle import SMPPuzzle
 
 
 class SMPGameState():
@@ -24,13 +25,30 @@ class SMPGameState():
 	_end_time = 0
 
 
-	def __init__(self, gid):
+	def __init__(self, gid, max_players):
 		'''
 		Creates a unique game instance
 		@param gid uint A unique game id
 		'''
 		self._gid = gid
+		self._max_player_count = max_players
+		self._puzzle = SMPPuzzle.get_new_puzzle()
 
+
+
+	def add_player(self, player_info):
+		self._pinfo.append(player_info)
+
+	def has_started(self):
+		return self._start_time > 0
+
+	def has_ended(self):
+		return self._end_time > self._start_time
+
+
+
+
+	############### GAME INFO ##############
 
 	def serialize_game_info(self):
 		''' Returns serialised game info '''
@@ -62,10 +80,3 @@ class SMPGameState():
 			curpos += pilen
 
 		return idict
-
-
-	def has_started(self):
-		return self._start_time > 0
-
-	def has_ended(self):
-		return self._end_time > self._start_time

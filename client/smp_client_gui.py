@@ -4,8 +4,8 @@ Created on 13. nov 2017
 @author: Johan
 '''
 from PySide.QtCore import QObject, Signal
-from PySide import QtUiTools
-from PySide.QtGui import QMessageBox, QIntValidator
+from PySide import QtUiTools, QtGui
+from PySide.QtGui import QMessageBox, QIntValidator, QTableWidget, QTableWidgetItem, QLayout
 from common.smp_common import LOG
 from common import smp_network
 
@@ -110,6 +110,27 @@ class SMPClientGui(QObject):
 		self.set_connected(False)
 
 	def update_game_list(self, game_info_list):
+		try:
+			rowcnt = len(game_info_list)
+
+			for i in range(rowcnt):
+				self._lobby_gui.gameListTable.insertRow(i)
+				gid = QTableWidgetItem(str(game_info_list[i][0]))
+				starttime = QTableWidgetItem(str(game_info_list[i][1]))
+				maxplayers = QTableWidgetItem(str(game_info_list[i][2]))
+				joinedplayers = QTableWidgetItem(str(game_info_list[i][3]))
+				playernames = QTableWidgetItem(str(game_info_list[i][4]))
+				self._lobby_gui.gameListTable.setItem(i, 0, gid)
+				self._lobby_gui.gameListTable.setItem(i, 1, starttime)
+				self._lobby_gui.gameListTable.setItem(i, 2, maxplayers)
+				self._lobby_gui.gameListTable.setItem(i, 3, joinedplayers)
+				self._lobby_gui.gameListTable.setItem(i, 4, playernames)
+
+			# game_info_list is a list of dicts.
+			# See description in SMPGameState.unserialize_info_dict()
+			LOG.critical('GUI game list update UNIMPLEMENTED')
+		except Exception, e:
+			LOG.error('Failed to upload to ftp: ' + str(e))
 		# game_info_list is a list of dicts.
 		# See description in SMPGameState.unserialize_info_dict()
 		LOG.critical('GUI game list update UNIMPLEMENTED')

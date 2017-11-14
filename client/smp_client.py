@@ -24,6 +24,10 @@ class SMPClient():
 		self._gui = SMPClientGui(self)
 		self._gui.show_lobby()
 
+		'''
+		dic = [[1, 2, 3, 4, 5], [4, 5, 6, 4, 5], [7, 8, 9, 4, 5]]
+		self._gui.update_game_list(dic)
+		'''
 
 	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, cname=''):
 		''' Creates a SMPClientNet object and connects to the server '''

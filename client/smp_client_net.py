@@ -175,4 +175,5 @@ class SMPClientNet(threading.Thread):
 		LOG.debug('Sent join game request, gid={}'.format(gid))
 
 	def req_leave_game(self):
-		LOG.critical('ClientNet: leave game UNIMPLEMENTED')
+		smpnet_send_msg(self._sock, MSG.REQ_GLEAVE, '')
+		LOG.debug('Sent leave game request')

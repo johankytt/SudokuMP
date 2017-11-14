@@ -109,7 +109,7 @@ class SMPClient():
 		self._client_net.req_join_game(gid)
 
 	def leave_game(self):
-		LOG.critical('Leave game request UNIMPLEMENTED')
+		self._client_net.req_leave_game()
 
 
 

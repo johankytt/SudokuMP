@@ -68,7 +68,8 @@ class SMPClientGui(QObject):
 		self._lobby_gui.newGameButton.clicked.connect(self.create_game)
 		self._lobby_gui.maxPlayersField.textChanged.connect(self.max_players_changed)
 
-
+		# Game window
+		self._game_gui.leaveGameButton.clicked.connect(self._client.leave_game)
 
 
 
@@ -121,6 +122,7 @@ class SMPClientGui(QObject):
 			self._game_gui.gidLabel.setText(str(gid))
 			self._game_gui.durationLabel.setText(str(0) + ' s')
 		else:
+			self.show_lobby_signal.emit()
 			self._lobby_gui.joinGameButton.setEnabled(True)
 
 

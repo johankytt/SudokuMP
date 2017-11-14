@@ -125,6 +125,11 @@ class SMPServerClient(threading.Thread):
 			LOG.info('MSG.REQ_GJOIN received')
 			gid = smp_network.unpack_uint32(msg)
 			self.join_game_handler(gid)
+
+		elif mhead == MSG.REQ_GLEAVE:
+			LOG.info('MSG.REQ_GLEAVE received')
+			self._game.remove_player(self)
+			self._game = None
 		else:
 			LOG.critical('Need to handle received message: {}'.format((mhead, dlen, msg)))
 
@@ -147,6 +152,7 @@ class SMPServerClient(threading.Thread):
 
 
 
+
 	# SEND FUNCTIONS
 
 	def send_cid(self):
@@ -160,3 +166,6 @@ class SMPServerClient(threading.Thread):
 		smpnet_send_msg(self._sock, RSP.GLIST, self._server.serialize_game_info_list())
 		LOG.debug('Sent game info')
 
+	def notify_game_eject(self, gid):
+		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
+		LOG.critical('servclient: game eject: Implement server to client text messages')

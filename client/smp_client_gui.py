@@ -22,6 +22,8 @@ class SMPClientGui(QObject):
 	show_lobby_signal = Signal()
 	show_game_signal = Signal()
 	game_join_signal = Signal(int)
+	messagebox_signal = Signal(str)
+	disconnect_signal = Signal()
 
 
 	def __init__(self, client):
@@ -53,6 +55,8 @@ class SMPClientGui(QObject):
 		self.show_lobby_signal.connect(self.show_lobby)
 		self.show_game_signal.connect(self.show_game)
 		self.game_join_signal.connect(self.notify_game_joined)
+		self.messagebox_signal.connect(self.show_notification)
+		self.disconnect_signal.connect(self.notify_disconnect)
 
 		# Lobby window
 		self._lobby_gui.playerNameField.textChanged.connect(self.connection_field_changed)
@@ -68,7 +72,8 @@ class SMPClientGui(QObject):
 		self._lobby_gui.newGameButton.clicked.connect(self.create_game)
 		self._lobby_gui.maxPlayersField.textChanged.connect(self.max_players_changed)
 
-
+		# Game window
+		self._game_gui.leaveGameButton.clicked.connect(self._client.leave_game)
 
 
 
@@ -101,11 +106,13 @@ class SMPClientGui(QObject):
 	######### EXTERNAL NOTIFICATION RECEIVERS ########
 
 	def show_notification(self, msg):
+		LOG.debug('GUI showing notification []'.format(msg))
 		msgbox = QMessageBox()
 		msgbox.setText(msg)
 		msgbox.exec_()
 
 	def notify_disconnect(self):
+		LOG.debug('GUI received disconnect notification')
 		self.show_lobby_signal.emit()
 		self.set_connected(False)
 
@@ -142,6 +149,7 @@ class SMPClientGui(QObject):
 			self._game_gui.gidLabel.setText(str(gid))
 			self._game_gui.durationLabel.setText(str(0) + ' s')
 		else:
+			self.show_lobby_signal.emit()
 			self._lobby_gui.joinGameButton.setEnabled(True)
 
 

@@ -25,6 +25,7 @@ class MSG():
 	REQ_GLIST = 0x10  # Request game list
 	REQ_GNEW = 0x11  # Create new game
 	REQ_GJOIN = 0x12  # Request to join a game
+	REQ_GLEAVE = 0x13  # Request to leave current game
 
 
 

@@ -70,8 +70,8 @@ class SMPClient():
 		self._cid = 0
 		self._gid = None
 		self._client_net = None
-		self._gui.show_notification('Connection closed unexpectedly')
-		self._gui.notify_disconnect()
+		self._gui.messagebox_signal.emit('Connection closed unexpectedly')
+		self._gui.disconnect_signal.emit()
 
 
 	def exit(self):
@@ -113,7 +113,7 @@ class SMPClient():
 		self._client_net.req_join_game(gid)
 
 	def leave_game(self):
-		LOG.critical('Leave game request UNIMPLEMENTED')
+		self._client_net.req_leave_game()
 
 
 

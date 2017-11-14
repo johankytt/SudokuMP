@@ -53,20 +53,25 @@ class SMPServer():
 			# TODO: implement game clean up
 
 
-	### GAME RELATED FUNCTIONS ###
+	###### GAME RELATED FUNCTIONS ######
+
 	def create_game(self, max_players):
 		LOG.critical('New game creation requested. Improve implementation.')
 		with self._game_lock:
-			g = SMPServerGame(self._next_gid, max_players)
+			g = SMPServerGame(self, self._next_gid, max_players)
 			LOG.debug('SMPServer: New game created, {}'.format(g._gid))
 			self._next_gid += 1
 			self._games.append(g)
 			return g._gid
 
-	def destroy_game(self, game):
-		# TODO: Clean up the game
+	def remove_game(self, game):
+		LOG.info('Removing game gid={}'.format(game._gid))
 		with self._game_lock:
 			self._games.remove(game)
+
+	def destroy_game(self, game):
+		LOG.info('SMPServer: Destroying game gid={}'.format(game._gid))
+		game.remove_all_players()
 
 	def join_game(self, gid, client):
 		with self._game_lock:
@@ -75,11 +80,6 @@ class SMPServer():
 					if g.add_player(client):
 						return True
 		return False
-
-
-	def leave_game(self, client):
-		LOG.critical('Leave game requested. UNIMPLEMENTED')
-
 
 
 	def serialize_game_info_list(self):

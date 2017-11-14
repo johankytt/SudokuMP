@@ -3,7 +3,7 @@ Created on 13. nov 2017
 
 @author: Johan
 '''
-from PySide.QtCore import QObject, Signal
+from PySide.QtCore import QObject, Signal, Qt
 from PySide import QtUiTools, QtGui
 from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem
 from common.smp_common import LOG
@@ -74,6 +74,7 @@ class SMPClientGui(QObject):
 
 		# Game window
 		self._game_gui.leaveGameButton.clicked.connect(self._client.leave_game)
+		self.connect_board_gui_signals()
 
 
 
@@ -117,30 +118,39 @@ class SMPClientGui(QObject):
 		self.set_connected(False)
 
 	def update_game_list(self, game_info_list):
-		try:
-			rowcnt = len(game_info_list)
+		# try:
+		# rowcnt = len(game_info_list)
+		self._lobby_gui.gameListTable.setRowCount(0)
 
-			for i in range(rowcnt):
-				self._lobby_gui.gameListTable.insertRow(i)
-				gid = QTableWidgetItem(str(game_info_list[i][0]))
-				starttime = QTableWidgetItem(str(game_info_list[i][1]))
-				maxplayers = QTableWidgetItem(str(game_info_list[i][2]))
-				joinedplayers = QTableWidgetItem(str(game_info_list[i][3]))
-				playernames = QTableWidgetItem(str(game_info_list[i][4]))
-				self._lobby_gui.gameListTable.setItem(i, 0, gid)
-				self._lobby_gui.gameListTable.setItem(i, 1, starttime)
-				self._lobby_gui.gameListTable.setItem(i, 2, maxplayers)
-				self._lobby_gui.gameListTable.setItem(i, 3, joinedplayers)
-				self._lobby_gui.gameListTable.setItem(i, 4, playernames)
+		for gi in game_info_list:
+			row = self._lobby_gui.gameListTable.rowCount()
+			self._lobby_gui.gameListTable.insertRow(row)
 
-			# game_info_list is a list of dicts.
-			# See description in SMPGameState.unserialize_info_dict()
-			LOG.critical('GUI game list update UNIMPLEMENTED')
-		except Exception, e:
-			LOG.error(e.message)
+			gid = QTableWidgetItem(str(gi['gid']))
+			starttime = QTableWidgetItem(str(gi['starttime']))
+			maxplayers = QTableWidgetItem(str(gi['maxplayers']))
+			joinedplayers = QTableWidgetItem(str(len(gi['playerinfo'])))
+			playernames = QTableWidgetItem(', '.join([pi.get_name() for pi in gi['playerinfo']]))
+
+			gid.setTextAlignment(Qt.AlignCenter)
+			starttime.setTextAlignment(Qt.AlignCenter)
+			maxplayers.setTextAlignment(Qt.AlignCenter)
+			joinedplayers.setTextAlignment(Qt.AlignCenter)
+
+			self._lobby_gui.gameListTable.setItem(row, 0, gid)
+			self._lobby_gui.gameListTable.setItem(row, 1, starttime)
+			self._lobby_gui.gameListTable.setItem(row, 2, maxplayers)
+			self._lobby_gui.gameListTable.setItem(row, 3, joinedplayers)
+			self._lobby_gui.gameListTable.setItem(row, 4, playernames)
+
+		self._lobby_gui.gameListTable.resizeColumnsToContents()
+
+		# except Exception, e:
+		# 	LOG.error(e.message)
+
 		# game_info_list is a list of dicts.
 		# See description in SMPGameState.unserialize_info_dict()
-		LOG.critical('GUI game list update UNIMPLEMENTED')
+		LOG.critical('GUI game list update IN TESTING')
 
 	def notify_game_joined(self, gid):
 		LOG.debug('gui.notify_game_joined()')
@@ -148,6 +158,8 @@ class SMPClientGui(QObject):
 			self.show_game_signal.emit()
 			self._game_gui.gidLabel.setText(str(gid))
 			self._game_gui.durationLabel.setText(str(0) + ' s')
+			self._client.enter_number(4, 3, 8)
+			LOG.critical('GUI entered a fake number. Remove after testing.')
 		else:
 			self.show_lobby_signal.emit()
 			self._lobby_gui.joinGameButton.setEnabled(True)
@@ -188,15 +200,32 @@ class SMPClientGui(QObject):
 
 
 	def join_game_clicked(self):
-		LOG.critical('GUI join game: implement game id reading from table')
+		# Disable join button so several simultaneous join requests can't be made
 		self._lobby_gui.joinGameButton.setEnabled(False)
 
-		gid = -1  # TODO: CHANGE THIS
-
 		indexes = self._lobby_gui.gameListTable.selectionModel().selectedRows()
-		for index in sorted(indexes):
-			gid = self._lobby_gui.gameListTable.item(index.row(), 0).text()
+		if indexes:
+			gid = int(self._lobby_gui.gameListTable.item(indexes[0].row(), 0).text())
+			LOG.critical('Selected gid: {}'.format((gid,)))
+			self._client.join_game(gid)
 
-		self._client.join_game(gid)
+		# No game was selected, re-enable join button
+		else:
+			self._lobby_gui.joinGameButton.setEnabled(True)
 
+
+
+
+	############ GAME BOARD SLOTS/SIGNALS ############
+
+	def connect_board_gui_signals(self):
+		LOG.critical('Board GUI signals not connected')
+
+	def notify_initial_board_received(self, board):
+		# board is a 9x9 list of numbers
+		LOG.critical('GUI initial board setup UNIMPLEMENTED')
+
+	def notify_board_update_received(self, board):
+		# board is a 9x9 list of numbers
+		LOG.critical('GUI board update UNIMPLEMENTED')
 

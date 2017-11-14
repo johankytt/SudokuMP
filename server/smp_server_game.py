@@ -28,19 +28,30 @@ class SMPServerGame():
 		self._clients = []
 		self._client_lock = threading.Lock()
 
+	def get_gid(self):
+		return self._gid
 
 
 	############# PLAYER MANAGEMENT ################
 	def add_player(self, client):
 		with self._client_lock:
-			if self._game_state.add_player(client._pinfo):
+
+			# Check if client is already playing
+			if client in self._clients:
+				client.notify_gjoin()
+				LOG.critical('Send player and game board update to the specific client')
+
+			elif self._game_state.add_player(client._pinfo):
 				self._clients.append(client)
 				client.set_game(self)
 				client.get_player_info().set_score(0)
+				client.notify_gjoin()
+
 				LOG.critical('SMPServerGame: notify all players of player list change UNIMPLEMENTED')
-				return True
-			else:
-				return False
+
+				if self._game_state.game_full():
+					self._start_game()
+
 
 	def remove_player(self, client):
 		LOG.debug('SMPServerGame: removing player cid={}'.format(client._cid))
@@ -80,7 +91,12 @@ class SMPServerGame():
 
 	############### GAME LOGIC ################
 
-	def start_game(self):
+	def _start_game(self):
+		'''
+		Starts the game and sends notifications to all players.
+		This function must be called only from another function
+		that already holds the client_lock
+		'''
 		self._game_state.set_start_time(time.time())
 		LOG.critical('Send all players start time update UNIMPLEMENTED')
 		LOG.critical('Send all players game board update UNIMPLEMENTED')
@@ -99,6 +115,7 @@ class SMPServerGame():
 		@param col
 		@param value
 		'''
+		LOG.debug('ServGame.enter_number(): gid={}, cid={}, {}'.format(self._gid, client._cid, (row, col, value)))
 
 		if not self._game_state.has_started() or self._game_state.has_ended():
 			LOG.critical('Number Entry: game not started or has ended. Is anything needed here???')

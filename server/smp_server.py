@@ -73,13 +73,13 @@ class SMPServer():
 		LOG.info('SMPServer: Destroying game gid={}'.format(game._gid))
 		game.remove_all_players()
 
-	def join_game(self, gid, client):
+	def get_game(self, gid):
 		with self._game_lock:
 			for g in self._games:
-				if g._gid == gid:
-					if g.add_player(client):
-						return True
-		return False
+				if g.get_gid() == gid:
+					return True
+		return None
+
 
 
 	def serialize_game_info_list(self):

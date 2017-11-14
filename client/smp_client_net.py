@@ -129,6 +129,7 @@ class SMPClientNet(threading.Thread):
 
 		elif mhead == RSP.GJOIN:
 			LOG.debug('RSP.GJOIN received')
+			LOG.critical('Compare given and received game id. If they don\'t match, the client was already in another game.')
 			self._client.notify_game_joined(smp_network.unpack_uint32(data))
 
 		else:
@@ -177,3 +178,11 @@ class SMPClientNet(threading.Thread):
 	def req_leave_game(self):
 		smpnet_send_msg(self._sock, MSG.REQ_GLEAVE, '')
 		LOG.debug('Sent leave game request')
+
+	def req_enter_number(self, row, col, value):
+		msg = 	smp_network.pack_uint8(row) + \
+			 	smp_network.pack_uint8(col) + \
+			 	smp_network.pack_uint8(value)
+
+		smpnet_send_msg(self._sock, MSG.REQ_GENTRY, msg)
+		LOG.debug('Sent MGS.REQ_GENTRY {}'.format((row, col, value)))

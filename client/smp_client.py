@@ -7,6 +7,9 @@ from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 from client.smp_client_net import SMPClientNet
 from common.smp_common import LOG, SMPException
 from client.smp_client_gui import SMPClientGui
+from common.smp_puzzle import SMPPuzzle
+from common.smp_player_info import SMPPlayerInfo
+from random import randint as ri
 
 
 class SMPClient():
@@ -24,10 +27,19 @@ class SMPClient():
 		self._gui = SMPClientGui(self)
 		self._gui.show_lobby()
 
-		'''
-		dic = [[1, 2, 3, 4, 5], [4, 5, 6, 4, 5], [7, 8, 9, 4, 5]]
+		##### FAKE GAME LIST GENERATION #####
+		# TODO: REMOVE
+		pilist = []
+		for i in xrange(10):
+			pilist.append(SMPPlayerInfo(ri(1, 100), 'tp_{}'.format(i), ri(-100, 100)))
+
+		dic = [	{'gid':ri(1, 100), 'starttime':ri(1, 1e8), 'maxplayers':ri(1, 100), 'playerinfo':pilist[0:3]},
+				{'gid':ri(1, 100), 'starttime':ri(1, 1e8), 'maxplayers':ri(1, 100), 'playerinfo':pilist[4:6]},
+				{'gid':ri(1, 100), 'starttime':ri(1, 1e8), 'maxplayers':ri(1, 100), 'playerinfo':pilist[6:]}
+		]
 		self._gui.update_game_list(dic)
-		'''
+		LOG.critical('SMPClient generated a fake game list. Remove after testing.')
+
 
 	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, cname=''):
 		''' Creates a SMPClientNet object and connects to the server '''
@@ -115,7 +127,8 @@ class SMPClient():
 	def leave_game(self):
 		self._client_net.req_leave_game()
 
-
+	def enter_number(self, row, col, value):
+		self._client_net.req_enter_number(row, col, value)
 
 	######## Network Notifications ##########
 

@@ -132,8 +132,16 @@ class SMPServerClient(threading.Thread):
 			LOG.info('MSG.REQ_GLEAVE received')
 			self._game.remove_player(self)
 			self._game = None
+
+		elif mhead == MSG.REQ_GENTRY:
+			LOG.info('MSG.REQ_GENTRY received')
+			if self._game:
+				row = smp_network.unpack_uint8(msg[0])
+				col = smp_network.unpack_uint8(msg[1])
+				value = smp_network.unpack_uint8(msg[2])
+				self._game.enter_number(self, row, col, value)
 		else:
-			LOG.critical('Need to handle received message: {}'.format((mhead, dlen, msg)))
+			LOG.critical('Received unhandled message: {}'.format((mhead, dlen, msg)))
 
 
 
@@ -142,14 +150,18 @@ class SMPServerClient(threading.Thread):
 		LOG.debug('ServClient: Joining game {}'.format(gid))
 		# Check if client is in a game already and respond with that gid
 		if self._game != None:
-			resp_id = self._game._gid
-		elif self._server.join_game(gid, self):
-			resp_id = gid
+			self._game.add_player(self)
+
+		# Otherwise try to join the game
 		else:
-			resp_id = 0
+			g = self._server.get_game(gid)
+			if g != None:
+				g.add_player(self)
+				# Note: Join response is sent by the game object
 
-		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(resp_id))
-
+			else:
+				self._game = None
+				self.notify_gjoin()
 
 
 
@@ -171,3 +183,11 @@ class SMPServerClient(threading.Thread):
 	def notify_game_eject(self, gid):
 		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
 		LOG.critical('servclient: game eject: Implement server to client text messages')
+
+	def notify_gjoin(self):
+		if self._game != None:
+			gid = self._game.get_gid()
+		else:
+			gid = 0
+		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(gid))
+		LOG.debug('Sent RSP.GJOIN gid={}'.format(gid))

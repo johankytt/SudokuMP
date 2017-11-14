@@ -26,6 +26,7 @@ class MSG():
 	REQ_GNEW = 0x11  # Create new game
 	REQ_GJOIN = 0x12  # Request to join a game
 	REQ_GLEAVE = 0x13  # Request to leave current game
+	REQ_GENTRY = 0x14  # Request to enter a number in the game board
 
 
 

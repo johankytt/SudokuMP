@@ -55,6 +55,12 @@ class SMPGameState():
 		with self._pinfo_lock:
 			self._pinfo.remove(player_info)
 
+	def game_full(self):
+		if len(self._pinfo) == self._max_player_count:
+			return True
+		return False
+
+
 	def has_started(self):
 		return self._start_time > 0
 

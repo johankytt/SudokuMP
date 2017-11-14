@@ -6,6 +6,7 @@ Created on 12. nov 2017
 
 from common.smp_game_state import SMPGameState
 import threading
+from common.smp_common import LOG
 
 
 class SMPServerGame():
@@ -31,7 +32,8 @@ class SMPServerGame():
 		with self._client_lock:
 			if self._game_state.add_player(client._pinfo):
 				self._clients.append(client)
-				client._game = self  # TODO: Not very good here, should move it somewhere else
+				client.set_game(self)
+				LOG.critical('SMPServerGame: notify all players of player list change UNIMPLEMENTED')
 				return True
 			else:
 				return False

@@ -38,6 +38,9 @@ class SMPServerClient(threading.Thread):
 	def __str__(self):
 		return 'SMPServerClient:{}'.format(self._cid)
 
+	def set_game(self, g):
+		self._game = g
+
 
 	def run(self):
 		try:
@@ -116,22 +119,29 @@ class SMPServerClient(threading.Thread):
 		elif mhead == MSG.REQ_GNEW:
 			LOG.info('MSG.REQ_GNEW received')
 			gid = self._server.create_game(smp_network.unpack_uint8(msg))
-			self.join_game_handler(smp_network.pack_uint32(gid))
+			self.join_game_handler(gid)
 
+		elif mhead == MSG.REQ_GJOIN:
+			LOG.info('MSG.REQ_GJOIN received')
+			gid = smp_network.unpack_uint32(msg)
+			self.join_game_handler(gid)
 		else:
 			LOG.critical('Need to handle received message: {}'.format((mhead, dlen, msg)))
 
 
 
 	# PROTOCOL HANDLERS
-	def join_game_handler(self, msg):
-		gid = smp_network.unpack_uint32(msg)
+	def join_game_handler(self, gid):
 		LOG.debug('ServClient: Joining game {}'.format(gid))
-		if self._server.join_game(gid, self):
-			smpnet_send_msg(self._sock, RSP.GJOIN, msg)
+		# Check if client is in a game already and respond with that gid
+		if self._game != None:
+			resp_id = self._game._gid
+		elif self._server.join_game(gid, self):
+			resp_id = gid
 		else:
-			smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
-		LOG.critical('Game join handler partially implemented')
+			resp_id = 0
+
+		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(resp_id))
 
 
 

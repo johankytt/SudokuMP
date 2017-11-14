@@ -125,11 +125,12 @@ class SMPClientNet(threading.Thread):
 		elif mhead == RSP.GLIST:
 			LOG.debug('RSP.GLIST received')
 			gilist = self.unserialize_game_info_list(data)
-			self._client.game_list_received(gilist)
+			self._client.notify_game_list_received(gilist)
 
 		elif mhead == RSP.GJOIN:
 			LOG.debug('RSP.GJOIN received')
-			LOG.critical('Implement RSP.GJOIN handling')
+			self._client.notify_game_joined(smp_network.unpack_uint32(data))
+
 		else:
 			LOG.critical('Unhandled message: {}'.format((mhead, dlen, data)))
 
@@ -168,3 +169,10 @@ class SMPClientNet(threading.Thread):
 	def req_game_info_list(self):
 		smpnet_send_msg(self._sock, MSG.REQ_GLIST, '')
 		LOG.debug('Sent game info request')
+
+	def req_join_game(self, gid):
+		smpnet_send_msg(self._sock, MSG.REQ_GJOIN, smp_network.pack_uint32(gid))
+		LOG.debug('Sent join game request, gid={}'.format(gid))
+
+	def req_leave_game(self):
+		LOG.critical('ClientNet: leave game UNIMPLEMENTED')

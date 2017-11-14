@@ -69,7 +69,6 @@ class SMPServer():
 			self._games.remove(game)
 
 	def join_game(self, gid, client):
-		LOG.critical('Join game requested. UNIMPLEMENTED')
 		with self._game_lock:
 			for g in self._games:
 				if g._gid == gid:

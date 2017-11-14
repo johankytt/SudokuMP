@@ -52,7 +52,7 @@ class SMPClient():
 			self._client_net.join()
 
 		self._cid = 0
-		self._game = None
+		self._gid = None
 		self._client_net = None
 		LOG.critical('Check for client disconnect cleanup errors')
 		self._gui.notify_disconnect()
@@ -64,7 +64,7 @@ class SMPClient():
 		# TODO: Clean up after server-initiated disconnect
 		LOG.critical('SMPClient: clean up after server disconnect UNIMPLEMENTED')
 		self._cid = 0
-		self._game = None
+		self._gid = None
 		self._client_net = None
 		self._gui.show_notification('Connection closed unexpectedly')
 		self._gui.notify_disconnect()
@@ -75,7 +75,7 @@ class SMPClient():
 		if self._client_net:
 			if self._gid:
 				LOG.info('Leaving game.')
-				self._client_net.leave_game()
+				self._client_net.req_leave_game()
 
 			LOG.info('Disconnecting.')
 			self.disconnect(True)
@@ -94,7 +94,8 @@ class SMPClient():
 		self._cname = cname
 
 
-	# Network Requests
+	######### Network Requests #############
+
 	def create_game(self, max_players):
 		if self._client_net:
 			self._client_net.req_new_game(max_players)
@@ -104,14 +105,17 @@ class SMPClient():
 	def get_game_list(self):
 		self._client_net.req_game_info_list()
 
+	def join_game(self, gid):
+		self._client_net.req_join_game(gid)
+
 	def leave_game(self):
 		LOG.critical('Leave game request UNIMPLEMENTED')
 
 
-	# Network Notifications
 
-	def game_list_received(self, gilist):
-		LOG.critical('SMPClient.game_list_received() UNIMPLEMENTED')
+	######## Network Notifications ##########
+
+	def notify_game_list_received(self, gilist):
 		LOG.debug('SMPClient received GLIST: {}'.format(gilist))
 		for pil in [gi['playerinfo'] for gi in gilist]:
 			for pi in pil:
@@ -119,5 +123,9 @@ class SMPClient():
 
 		self._gui.update_game_list(gilist)
 
-	def game_joined(self, gid):
-		LOG.critical('Game joined notification UNIMPLEMENTED')
+
+	def notify_game_joined(self, gid):
+		LOG.debug('Notifying the gui')
+		self._gid = gid
+		# self._gui.notify_game_joined(gid)
+		self._gui.game_join_signal.emit(gid)

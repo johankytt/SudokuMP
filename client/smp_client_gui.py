@@ -5,7 +5,7 @@ Created on 13. nov 2017
 '''
 from PySide.QtCore import QObject, Signal
 from PySide import QtUiTools, QtGui
-from PySide.QtGui import QMessageBox, QIntValidator, QTableWidget, QTableWidgetItem, QLayout
+from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem
 from common.smp_common import LOG
 from common import smp_network
 
@@ -190,5 +190,13 @@ class SMPClientGui(QObject):
 	def join_game_clicked(self):
 		LOG.critical('GUI join game: implement game id reading from table')
 		self._lobby_gui.joinGameButton.setEnabled(False)
-		gid = 1  # TODO: CHANGE THIS
+
+		gid = -1  # TODO: CHANGE THIS
+
+		indexes = self._lobby_gui.gameListTable.selectionModel().selectedRows()
+		for index in sorted(indexes):
+			gid = self._lobby_gui.gameListTable.item(index.row(), 0).text()
+
 		self._client.join_game(gid)
+
+

@@ -66,8 +66,8 @@ class SMPClient():
 		self._cid = 0
 		self._gid = None
 		self._client_net = None
-		self._gui.show_notification('Connection closed unexpectedly')
-		self._gui.notify_disconnect()
+		self._gui.messagebox_signal.emit('Connection closed unexpectedly')
+		self._gui.disconnect_signal.emit()
 
 
 	def exit(self):

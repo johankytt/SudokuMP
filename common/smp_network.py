@@ -44,6 +44,16 @@ class RSP():
 
 # Utility functions
 
+def pack_int8(num):
+	return struct.pack('>b', num)
+
+def unpack_int8(msg):
+	try:
+		return struct.unpack('>b', msg)[0]  # unpack returns a tuple
+	except struct.error:
+		LOG.critical('Unable to unpack int8 from \'{}\''.format(msg))
+		return None
+
 def pack_uint8(num):
 	return struct.pack('>B', num)
 

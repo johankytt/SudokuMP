@@ -24,7 +24,7 @@ class SMPClientGui(QObject):
 	game_join_signal = Signal(int)
 	messagebox_signal = Signal(str)
 	disconnect_signal = Signal()
-
+	game_list_update_signal = Signal(list)
 
 	def __init__(self, client):
 		'''
@@ -57,6 +57,7 @@ class SMPClientGui(QObject):
 		self.game_join_signal.connect(self.notify_game_joined)
 		self.messagebox_signal.connect(self.show_notification)
 		self.disconnect_signal.connect(self.notify_disconnect)
+		self.game_list_update_signal.connect(self.update_game_list)
 
 		# Lobby window
 		self._lobby_gui.playerNameField.textChanged.connect(self.connection_field_changed)

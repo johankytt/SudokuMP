@@ -27,19 +27,6 @@ class SMPClient():
 		self._gui = SMPClientGui(self)
 		self._gui.show_lobby()
 
-		##### FAKE GAME LIST GENERATION #####
-		# TODO: REMOVE
-		pilist = []
-		for i in xrange(10):
-			pilist.append(SMPPlayerInfo(ri(1, 100), 'tp_{}'.format(i), ri(-100, 100)))
-
-		dic = [	{'gid':ri(1, 100), 'starttime':ri(1, 1e8), 'maxplayers':ri(1, 100), 'playerinfo':pilist[0:3]},
-				{'gid':ri(1, 100), 'starttime':ri(1, 1e8), 'maxplayers':ri(1, 100), 'playerinfo':pilist[4:6]},
-				{'gid':ri(1, 100), 'starttime':ri(1, 1e8), 'maxplayers':ri(1, 100), 'playerinfo':pilist[6:]}
-		]
-		self._gui.update_game_list(dic)
-		LOG.critical('SMPClient generated a fake game list. Remove after testing.')
-
 
 	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, cname=''):
 		''' Creates a SMPClientNet object and connects to the server '''
@@ -138,7 +125,7 @@ class SMPClient():
 			for pi in pil:
 				LOG.debug(pi)
 
-		self._gui.update_game_list(gilist)
+		self._gui.game_list_update_signal.emit(gilist)
 
 
 	def notify_game_joined(self, gid):

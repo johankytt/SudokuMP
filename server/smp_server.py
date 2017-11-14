@@ -77,7 +77,7 @@ class SMPServer():
 		with self._game_lock:
 			for g in self._games:
 				if g.get_gid() == gid:
-					return True
+					return g
 		return None
 
 

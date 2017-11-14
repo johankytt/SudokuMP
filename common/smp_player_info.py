@@ -5,6 +5,7 @@ Created on 12. nov 2017
 '''
 from common.smp_common import SMPException
 from common import smp_network
+import math
 
 
 class SMPPlayerInfo(object):
@@ -36,6 +37,7 @@ class SMPPlayerInfo(object):
 
 	def add_score(self, update):
 		self._score += update
+		self._score = max(min(127, self._score), -127)  # Clamp score to [-127,127]
 
 	def get_score(self):
 		return self._score
@@ -48,7 +50,7 @@ class SMPPlayerInfo(object):
 
 	def serialize(self):
 		pistr = smp_network.pack_uint32(self._cid)
-		pistr += smp_network.pack_uint8(self._score)
+		pistr += smp_network.pack_int8(self._score)
 		pistr += smp_network.pack_uint8(len(self._cname))
 		pistr += self._cname
 		return pistr
@@ -57,7 +59,7 @@ class SMPPlayerInfo(object):
 	@staticmethod
 	def unserialize(pi_str):
 		cid = smp_network.unpack_uint32(pi_str[0:4])
-		score = smp_network.unpack_uint8(pi_str[4:5])
+		score = smp_network.unpack_int8(pi_str[4:5])
 		nl = smp_network.unpack_uint8(pi_str[5:6])
 		cname = pi_str[6:6 + nl]
 		return (SMPPlayerInfo(cid, cname, score), 6 + nl)

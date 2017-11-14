@@ -34,6 +34,9 @@ class SMPPlayerInfo(object):
 	def set_score(self, score):
 		self._score = score
 
+	def add_score(self, update):
+		self._score += update
+
 	def get_score(self):
 		return self._score
 
@@ -41,6 +44,7 @@ class SMPPlayerInfo(object):
 		return self._cname
 
 
+	########### SERIALIZATION ###########
 
 	def serialize(self):
 		pistr = smp_network.pack_uint32(self._cid)

@@ -67,6 +67,13 @@ class SMPGameState():
 	def set_end_time(self, t):
 		self._end_time = t
 
+	def get_puzzle(self):
+		return self._puzzle
+
+	def enter_number(self, row, col, value):
+		return self._puzzle.enter_number(row, col, value)
+
+
 
 	############### GAME INFO ##############
 

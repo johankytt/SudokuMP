@@ -5,6 +5,7 @@ Created on 11. nov 2017
 '''
 from common.smp_common import SMPException
 import random, copy
+import threading
 
 class SMPPuzzle():
 	'''
@@ -21,7 +22,7 @@ class SMPPuzzle():
 	initial_state = None  # Must not be changed after initialisation
 	current_state = None
 	solution = None  # Must not be changed after initialisation
-
+	board_lock = None
 
 
 	def __init__(self, initial, solution):
@@ -29,6 +30,8 @@ class SMPPuzzle():
 		Initialises the puzzle given the initial
 		and solution matrices.
 		'''
+
+		self.board_lock = threading.Lock()
 
 		# Check the matrices have correct dimensions
 		if not SMPPuzzle._check_dimensions(initial, solution):
@@ -48,6 +51,7 @@ class SMPPuzzle():
 					self.current_state[row][col] = solution[row][col]
 
 
+	#####################################################
 
 	''' EXTERNAL INTERFACE '''
 
@@ -61,9 +65,44 @@ class SMPPuzzle():
 
 
 
+	def enter_number(self, row, col, value):
+		''' Attempt to enter a number at the given coordinates.
+		@return None if the coords contain initial number
+				True if the entered number is correct
+				False if the entered number is incorrect or deleted correct number
+		'''
+
+		with self.board_lock:
+			if self.initial_state[row][col]:
+				return None
+
+			oldvalue = self.current_state[row][col]
+
+			# Trying to re-enter existing number
+			if oldvalue == value:
+				return None
+
+			self.current_state[row][col] = value
+
+			# Entered correct number
+			if value == self.solution[row][col]:
+				return True
+
+			# Entered zero = deleted current number
+			if value == 0:
+				if oldvalue == self.solution[row][col]:
+					return False  # Deleted the correct value
+
+				return None
+
+			# Entered incorrect number
+			return False
+
+
+	def check_solution(self):
+		return self.current_state == self.solution
+
 	#####################################################
-
-
 
 	''' FROM HERE ON INTERNAL PRIVATE STUFF '''
 	@staticmethod

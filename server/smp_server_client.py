@@ -41,6 +41,8 @@ class SMPServerClient(threading.Thread):
 	def set_game(self, g):
 		self._game = g
 
+	def get_player_info(self):
+		return self._pinfo
 
 	def run(self):
 		try:

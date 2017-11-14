@@ -137,7 +137,7 @@ class SMPClientGui(QObject):
 			# See description in SMPGameState.unserialize_info_dict()
 			LOG.critical('GUI game list update UNIMPLEMENTED')
 		except Exception, e:
-			LOG.error('Failed to upload to ftp: ' + str(e))
+			LOG.error(e.message)
 		# game_info_list is a list of dicts.
 		# See description in SMPGameState.unserialize_info_dict()
 		LOG.critical('GUI game list update UNIMPLEMENTED')

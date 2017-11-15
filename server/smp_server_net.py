@@ -51,9 +51,10 @@ class SMPServerNet():
 		Starts the main server loop for accepting connections.
 		'''
 
-		self._listen()
-
 		try:
+			csock = None
+			self._listen()
+
 			LOG.info('Waiting for connections.')
 			while True:
 				csock = None
@@ -65,6 +66,8 @@ class SMPServerNet():
 					self._next_cid += 1
 				c.start()
 
+		except socket.error as e:
+			LOG.error('Unable to listen on {}:{}. {}.'.format(self._laddr, self._lport, str(e)))
 
 		except KeyboardInterrupt:
 			LOG.info('Keyboard interrupt received. Stopping server.')

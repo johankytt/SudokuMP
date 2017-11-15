@@ -42,7 +42,7 @@ class SMPClient():
 			self._client_net.connect(addr, port)
 			return True
 		except SMPException:
-			self._gui.messagebox_signal.emit('Unable to connect to {}:{}'.format(addr, port))
+			self._gui.notify_msgbox_signal.emit('Unable to connect to {}:{}'.format(addr, port))
 			return False
 
 
@@ -68,7 +68,7 @@ class SMPClient():
 			self._game_state = None
 		self._cid = 0
 		self._client_net = None
-		self._gui.messagebox_signal.emit('Connection closed unexpectedly')
+		self._gui.notify_msgbox_signal.emit('Connection closed unexpectedly')
 		self._gui.disconnect_signal.emit()
 
 
@@ -105,7 +105,8 @@ class SMPClient():
 			self._gui.show_notification('Not connected to a server.\nCan\'t create a new game.')
 
 	def get_game_list(self):
-		self._client_net.req_game_info_list()
+		if self._client_net:
+			self._client_net.req_game_info_list()
 
 	def join_game(self, gid):
 		self._client_net.req_join_game(gid)

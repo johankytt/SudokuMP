@@ -25,7 +25,8 @@ class SMPClientGui(QObject):
 	# SIGNALS
 	show_lobby_signal = Signal()
 	show_game_signal = Signal()
-	messagebox_signal = Signal(str)
+	notify_msgbox_signal = Signal(str)
+	notify_text_signal = Signal(str)
 
 	disconnect_signal = Signal()
 	game_join_signal = Signal(int)
@@ -63,6 +64,7 @@ class SMPClientGui(QObject):
 		self._lobby_gui.addressField.setText(smp_network.DEFAULT_HOST)
 		self._lobby_gui.portField.setText(str(smp_network.DEFAULT_PORT))
 
+		self._game_gui.notificationsArea.setAlignment(Qt.AlignCenter)
 		self.board_gui_setup()
 
 
@@ -72,7 +74,8 @@ class SMPClientGui(QObject):
 		self.show_lobby_signal.connect(self.show_lobby)
 		self.show_game_signal.connect(self.show_game)
 		self.game_join_signal.connect(self.notify_game_joined)
-		self.messagebox_signal.connect(self.show_notification)
+		self.notify_msgbox_signal.connect(self.show_msgbox)
+		self.notify_text_signal.connect(self.show_textnotif)
 		self.disconnect_signal.connect(self.notify_disconnect)
 		self.game_list_update_signal.connect(self.update_game_list)
 
@@ -109,10 +112,12 @@ class SMPClientGui(QObject):
 		self.duration_timer.stop()  # Just in case to ensure it's stopped
 		self._lobby_gui.show()
 		self._game_gui.hide()
+		self._lobby_gui.refreshGLButton.clicked.emit()
 
 	def show_game(self):
 		self._game_gui.show()
 		self._lobby_gui.hide()
+		self.notify_text_signal.emit('Waiting for Players')
 
 	def set_connected(self, state):
 		self._lobby_gui.playerNameField.setEnabled(not state)
@@ -129,11 +134,14 @@ class SMPClientGui(QObject):
 
 	######### EXTERNAL NOTIFICATION RECEIVERS ########
 
-	def show_notification(self, msg):
+	def show_msgbox(self, msg):
 		LOG.debug('GUI showing notification []'.format(msg))
 		msgbox = QMessageBox()
 		msgbox.setText(msg)
 		msgbox.exec_()
+
+	def show_textnotif(self, msg):
+		self._game_gui.notificationsArea.setText(msg)
 
 	def notify_disconnect(self):
 		LOG.debug('GUI received disconnect notification')
@@ -167,7 +175,7 @@ class SMPClientGui(QObject):
 			self._lobby_gui.gameListTable.setItem(row, 3, joinedplayers)
 			self._lobby_gui.gameListTable.setItem(row, 4, playernames)
 
-		self._lobby_gui.gameListTable.resizeColumnsToContents()
+		# self._lobby_gui.gameListTable.resizeColumnsToContents()
 
 	def notify_game_joined(self, gid):
 		LOG.debug('gui.notify_game_joined()')
@@ -187,14 +195,15 @@ class SMPClientGui(QObject):
 
 	def notify_game_start(self):
 		self.initial_board_setup()
-		# TODO: Show some kind of message somewhere
+		self.notify_text_signal.emit('GAME STARTED')
 		self.duration_timer.start(1000)  # Start as the last thing
 
 	def notify_game_end(self):
 		self.duration_timer.stop()
 		self.update_game_time()
-		# TODO: Set game board uneditable
-		# TODO: show some kind of message somewhere
+		self.disable_board()
+
+		self.notify_text_signal.emit('GAME ENDED')
 
 	def update_game_time(self):
 		gs = self._client._game_state
@@ -210,21 +219,24 @@ class SMPClientGui(QObject):
 
 	def notify_player_update(self):
 		pilist = self._client._game_state.get_pinfo()
-		self._game_gui.playersTable.setRowCount(0)
+		pt = self._game_gui.playersTable
+		pt.setRowCount(0)
 
 		with self._client._game_state._pinfo_lock:
 			for pi in pilist:
-				row = self._game_gui.playersTable.rowCount()
-				self._game_gui.playersTable.insertRow(row)
+				row = pt.rowCount()
+				pt.insertRow(row)
 
 				pname = QTableWidgetItem(str(pi.get_name()))
 				score = QTableWidgetItem(str(pi.get_score()))
+				pname.setTextAlignment(Qt.AlignCenter)
 				score.setTextAlignment(Qt.AlignCenter)
 
-				self._game_gui.playersTable.setItem(row, 0, pname)
-				self._game_gui.playersTable.setItem(row, 1, score)
+				pt.setItem(row, 0, pname)
+				pt.setItem(row, 1, score)
 
-			# self._game_gui.playersTable.resizeColumnsToContents()
+		pt.sortItems(1, Qt.DescendingOrder)
+		# self._game_gui.playersTable.resizeColumnsToContents()
 
 
 

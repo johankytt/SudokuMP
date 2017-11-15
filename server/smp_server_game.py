@@ -36,8 +36,14 @@ class SMPServerGame():
 	def add_player(self, client):
 		with self._client_lock:
 
+			# Check if game has ended
+			if self._game_state.has_ended():
+				LOG.info('Game has already ended. Unable to join.')
+				client.set_game(None)
+				client.notify_gjoin()
+
 			# Check if client is already playing
-			if client in self._clients:
+			elif client in self._clients:
 				client.notify_gjoin()  # Also sends full game state
 
 			# If not, add it to the lists

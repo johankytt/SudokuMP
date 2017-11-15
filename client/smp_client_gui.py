@@ -208,6 +208,14 @@ class SMPClientGui(QObject):
 
 		self.notify_text_signal.emit('GAME ENDED')
 
+		pilist = sorted(self._client._game_state.get_pinfo(), key=lambda x:x.get_score(), reverse=True)
+		if pilist[0].get_cid() == self._client._cid:
+			self.notify_text_signal.emit('YOU WIN')
+		else:
+			self.notify_text_signal.emit('{} WINS'.format(pilist[0].get_name()))
+
+
+
 	def update_game_time(self):
 		gs = self._client._game_state
 		if gs:

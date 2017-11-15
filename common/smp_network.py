@@ -21,7 +21,8 @@ class MSG():
 
 	BYE = 0x00  # Disconnect
 	CID = 0x01  # Send client ID
-	CNAME = 0x02
+	CNAME = 0x02  # Client name
+	TEXT = 0x03  # General text message
 	REQ_GLIST = 0x10  # Request game list
 	REQ_GNEW = 0x11  # Create new game
 	REQ_GJOIN = 0x12  # Request to join a game
@@ -34,13 +35,10 @@ class MSG():
 	GEND = 0x24  # Send game end notification
 
 
-
 class RSP():
 	'''
 	SMP Response Messages
-	MSG and RSP values are all unique
-	
-	MAYBE THIS DOESN'T NEED TO BE SEPARATE FROM MSG
+	MSG and RSP values are all unique	
 	'''
 
 	GLIST = 0x80  # Send game list

@@ -3,10 +3,10 @@ Created on 13. nov 2017
 
 @author: Johan
 '''
-from PySide.QtCore import QObject, Signal, Qt, QTimer
+from PySide.QtCore import QObject, Signal, Qt, QTimer, QRegExp
 from PySide import QtUiTools
 from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem, QBrush, \
-	QColor
+	QColor, QRegExpValidator
 from common.smp_common import LOG
 from common import smp_network
 from client.smp_cell_delegate import SMPCellDelegate
@@ -58,6 +58,7 @@ class SMPClientGui(QObject):
 	def gui_setup(self):
 		self._lobby_gui.portField.setValidator(QIntValidator(1000, 2 ** 16 - 1))
 		self._lobby_gui.maxPlayersField.setValidator(QIntValidator(1, 2 ** 8 - 1))
+		self._lobby_gui.playerNameField.setValidator(QRegExpValidator(QRegExp("[a-zA-Z0-9_]*")))
 
 		self._lobby_gui.addressField.setText(smp_network.DEFAULT_HOST)
 		self._lobby_gui.portField.setText(str(smp_network.DEFAULT_PORT))
@@ -105,9 +106,9 @@ class SMPClientGui(QObject):
 	############### ACCESS / UTILITY FUNCTIONS ###############
 
 	def show_lobby(self):
+		self.duration_timer.stop()  # Just in case to ensure it's stopped
 		self._lobby_gui.show()
 		self._game_gui.hide()
-		# self._game_gui.show()
 
 	def show_game(self):
 		self._game_gui.show()
@@ -177,7 +178,6 @@ class SMPClientGui(QObject):
 
 		# Left / kicked out of a game
 		else:
-			self.duration_timer.stop()
 			self.show_lobby_signal.emit()
 			self._lobby_gui.joinGameButton.setEnabled(True)
 
@@ -188,8 +188,7 @@ class SMPClientGui(QObject):
 	def notify_game_start(self):
 		self.initial_board_setup()
 		# TODO: Show some kind of message somewhere
-		# TODO: timer as a last thing
-		self.duration_timer.start(1000)
+		self.duration_timer.start(1000)  # Start as the last thing
 
 	def notify_game_end(self):
 		self.duration_timer.stop()
@@ -238,15 +237,27 @@ class SMPClientGui(QObject):
 			for col in xrange(bt.columnCount()):
 				cell = QTableWidgetItem('')
 				cell.setTextAlignment(Qt.AlignCenter)
+				cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
 
 				# Create alternating background colour
 				if (math.floor(row / 3) + math.floor(col / 3)) % 2 == 0:
-					LOG.critical('Setting cell background')
 					cell.setBackground(QColor(230, 230, 230))
 
 				bt.setItem(row, col, cell)
 
-# 		bt.setItemDelegate(SMPCellDelegate())
+		bt.setItemDelegate(SMPCellDelegate())
+
+
+	def disable_board(self):
+		# Sets all cells uneditable
+		bt = self._game_gui.boardTable
+		bt.blockSignals(True)
+
+		for row in xrange(9):
+			for col in xrange(9):
+				cell = bt.item(row, col)
+				cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
+		bt.blockSignals(False)
 
 
 	def initial_board_setup(self):
@@ -280,7 +291,6 @@ class SMPClientGui(QObject):
 
 
 	def notify_board_update(self):
-		LOG.critical('GUI board update IN TESTING')
 		puzzle = self._client._game_state.get_puzzle()
 		bt = self._game_gui.boardTable
 		bt.blockSignals(True)
@@ -334,6 +344,7 @@ class SMPClientGui(QObject):
 
 		if self._client.connect(addr=addr, port=port, cname=cname):
 			self.set_connected(True)
+			self._lobby_gui.refreshGLButton.clicked.emit()
 
 
 	def create_game(self):

@@ -46,17 +46,16 @@ class SMPServer():
 		the client has disconnected and the game and client lists
 		need to be cleaned up 
 		'''
-
-		LOG.critical('Client cleanup UNIMPLEMENTED. Client {}.'.format(client))
+		with self._game_lock:
+			if client._game:
+				client._game.remove_player(client)
 		with self._server_net.client_lock:
 			self._clients.remove(client)
-			# TODO: implement game clean up
 
 
 	###### GAME RELATED FUNCTIONS ######
 
 	def create_game(self, max_players):
-		LOG.critical('New game creation requested. Improve implementation.')
 		with self._game_lock:
 			g = SMPServerGame(self, self._next_gid, max_players)
 			LOG.debug('SMPServer: New game created, {}'.format(g._gid))

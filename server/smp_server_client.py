@@ -174,13 +174,18 @@ class SMPServerClient(threading.Thread):
 			raise SMPException('Unable to send client id. Disconnecting.')
 		LOG.debug('Sent client id')
 
+	def send_text(self, msg):
+		smpnet_send_msg(self._sock, MSG.TEXT, msg)
+		LOG.debug('Sent MSG.TEXT')
+
 	def send_game_info_list(self):
 		''' Sends information about all available games to the client '''
 		smpnet_send_msg(self._sock, RSP.GLIST, self._server.serialize_game_info_list())
-		LOG.debug('Sent game info')
+		LOG.debug('Sent RSP.GLIST')
 
 	def send_game_eject(self, gid):
 		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
+		LOG.debug('Sent RSP.GJOIN')
 		LOG.critical('servclient: game eject: Implement server to client text messages')
 
 	def notify_gjoin(self):

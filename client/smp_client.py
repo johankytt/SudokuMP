@@ -42,32 +42,28 @@ class SMPClient():
 			self._client_net.connect(addr, port)
 			return True
 		except SMPException:
-			self._gui.show_notification('Unable to connect to {}:{}'.format(addr, port))
+			self._gui.messagebox_signal.emit('Unable to connect to {}:{}'.format(addr, port))
 			return False
 
 
 	def disconnect(self, blocking=False):
 		LOG.info('SMPClient disconnect()')
 		self._client_net.disconnect()
+		with self._game_lock:
+			self._game_state = None
 
 		# Wait for the network thread to finish
 		if blocking and self._client_net.is_alive():
 			LOG.info('SMPClient waiting for network thread to finish')
 			self._client_net.join()
 
-		with self._game_lock:
-			self._game_state = None
 		self._cid = 0
 		self._client_net = None
-		LOG.critical('Check for client disconnect cleanup errors')
 		self._gui.notify_disconnect()
 
 
 	def server_disconnect(self):
 		''' Called if the connection has been closed unexpectedly'''
-
-		# TODO: Clean up after server-initiated disconnect
-		LOG.critical('SMPClient: clean up after server disconnect UNIMPLEMENTED')
 		with self._game_lock:
 			self._game_state = None
 		self._cid = 0

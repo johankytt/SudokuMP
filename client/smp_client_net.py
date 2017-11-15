@@ -120,13 +120,17 @@ class SMPClientNet(threading.Thread):
 				cid = 0
 			self._client.set_cid(cid)
 
+		if mhead == MSG.TEXT:
+			LOG.debug('MSG.TEXT received')
+			LOG.critical('Use MSG.TEXT for something')
+
 		elif mhead == RSP.GLIST:
 			LOG.debug('RSP.GLIST received')
 			self.handle_GLIST(data)
 
 		elif mhead == RSP.GJOIN:
 			LOG.debug('RSP.GJOIN received')
-			LOG.critical('Compare given and received game id. If they don\'t match, the client was already in another game.')
+			# TODO: LOG.critical('Compare given and received game id. If they don\'t match, the client was already in another game.')
 			self._client.notify_game_joined(smp_network.unpack_uint32(data))
 
 		elif mhead == MSG.GSTATE:
@@ -155,7 +159,7 @@ class SMPClientNet(threading.Thread):
 			LOG.critical('GEND display user notification')
 
 		else:
-			LOG.critical('Unhandled message: {}'.format((mhead, dlen, data)))
+			LOG.critical('Received unhandled message: {}'.format((mhead, dlen, data)))
 
 
 

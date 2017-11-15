@@ -3,14 +3,14 @@ Created on 13. nov 2017
 
 @author: Johan
 '''
-from PySide.QtCore import QObject, Signal, Qt, QTimer, SLOT
-from PySide import QtUiTools, QtGui
-from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem, QLineEdit, \
-	QStyledItemDelegate
+from PySide.QtCore import QObject, Signal, Qt, QTimer
+from PySide import QtUiTools
+from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem, QBrush, \
+	QColor
 from common.smp_common import LOG
 from common import smp_network
-import time
 from client.smp_cell_delegate import SMPCellDelegate
+import math
 
 
 class SMPClientGui(QObject):
@@ -233,13 +233,20 @@ class SMPClientGui(QObject):
 
 	def board_gui_setup(self):
 		bt = self._game_gui.boardTable
+
 		for row in xrange(bt.rowCount()):
 			for col in xrange(bt.columnCount()):
 				cell = QTableWidgetItem('')
 				cell.setTextAlignment(Qt.AlignCenter)
+
+				# Create alternating background colour
+				if (math.floor(row / 3) + math.floor(col / 3)) % 2 == 0:
+					LOG.critical('Setting cell background')
+					cell.setBackground(QColor(230, 230, 230))
+
 				bt.setItem(row, col, cell)
 
-		bt.setItemDelegate(SMPCellDelegate())
+# 		bt.setItemDelegate(SMPCellDelegate())
 
 
 	def initial_board_setup(self):
@@ -251,6 +258,8 @@ class SMPClientGui(QObject):
 			for row in xrange(9):
 				for col in xrange(9):
 					cell = bt.item(row, col)
+
+					# Set initial cells uneditable
 					if puzzle.initial_state[row][col]:
 						cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
 						cell.setText(str(puzzle.solution[row][col]))

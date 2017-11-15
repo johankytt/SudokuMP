@@ -144,6 +144,14 @@ class SMPClientNet(threading.Thread):
 			# self.handle_GBUPDATE(data)
 			self._client.game_board_update(data)
 
+		elif mhead == MSG.GSTART:
+			LOG.debug('MSG.GSTART received')
+			self._client.notify_game_start(smp_network.unpack_uint32(data))
+
+		elif mhead == MSG.GEND:
+			LOG.debug('MSG.GEND received')
+			self._client.notify_game_end(smp_network.unpack_uint32(data))
+
 		else:
 			LOG.critical('Unhandled message: {}'.format((mhead, dlen, data)))
 

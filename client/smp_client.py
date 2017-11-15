@@ -132,12 +132,19 @@ class SMPClient():
 
 		self._gui.game_list_update_signal.emit(gilist)
 
-
 	def notify_game_joined(self, gid):
 		if gid == 0:
 			with self._game_lock:
 				self._game_state = None
 		self._gui.game_join_signal.emit(gid)
+
+	def notify_game_start(self, starttime):
+		self._game_state.set_start_time(starttime)
+		self._gui.game_start_signal.emit()
+
+	def notify_game_end(self, endtime):
+		self._game_state.set_end_time(endtime)
+		self._gui.game_end_signal.emit()
 
 	def game_state_update(self, gs_serial):
 		LOG.debug('Client: game state update '.format((gs_serial,)))

@@ -207,3 +207,12 @@ class SMPServerClient(threading.Thread):
 	def send_board_update(self, b_serial):
 		smpnet_send_msg(self._sock, MSG.GBUPDATE, b_serial)
 		LOG.debug('Sent MSG.GBUPDATE')
+
+
+	def send_game_start(self, starttime):
+		smpnet_send_msg(self._sock, MSG.GSTART, smp_network.pack_uint32(starttime))
+		LOG.debug('Sent MSG.GSTART')
+
+	def send_game_end(self, endtime):
+		smpnet_send_msg(self._sock, MSG.GEND, smp_network.pack_uint32(endtime))
+		LOG.debug('Sent MSG.GEND')

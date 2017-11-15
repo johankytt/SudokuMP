@@ -59,6 +59,9 @@
        <property name="editTriggers">
         <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
        </property>
+       <property name="tabKeyNavigation">
+        <bool>false</bool>
+       </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::SingleSelection</enum>
        </property>

@@ -3,11 +3,12 @@ Created on 13. nov 2017
 
 @author: Johan
 '''
-from PySide.QtCore import QObject, Signal, Qt
+from PySide.QtCore import QObject, Signal, Qt, QTimer
 from PySide import QtUiTools, QtGui
 from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem
 from common.smp_common import LOG
 from common import smp_network
+import time
 
 
 class SMPClientGui(QObject):
@@ -19,15 +20,22 @@ class SMPClientGui(QObject):
 	_game_gui = None
 	_client = None
 
+	# SIGNALS
 	show_lobby_signal = Signal()
 	show_game_signal = Signal()
-	game_join_signal = Signal(int)
 	messagebox_signal = Signal(str)
+
 	disconnect_signal = Signal()
+	game_join_signal = Signal(int)
 	game_list_update_signal = Signal(list)
+
 	game_state_signal = Signal()
 	player_update_signal = Signal()
 	board_update_signal = Signal()
+	game_start_signal = Signal()
+	game_end_signal = Signal()
+
+	duration_timer = QTimer()
 
 	def __init__(self, client):
 		'''
@@ -52,6 +60,9 @@ class SMPClientGui(QObject):
 		self._lobby_gui.addressField.setText(smp_network.DEFAULT_HOST)
 		self._lobby_gui.portField.setText(str(smp_network.DEFAULT_PORT))
 
+		self.board_gui_setup()
+
+
 
 	def connect_signals(self):
 		# Notification signals
@@ -64,6 +75,8 @@ class SMPClientGui(QObject):
 		self.game_state_signal.connect(self.notify_game_state)
 		self.player_update_signal.connect(self.notify_player_update)
 		self.board_update_signal.connect(self.notify_board_update)
+		self.game_start_signal.connect(self.notify_game_start)
+		self.game_end_signal.connect(self.notify_game_end)
 
 		# Lobby window
 		self._lobby_gui.playerNameField.textChanged.connect(self.connection_field_changed)
@@ -81,6 +94,7 @@ class SMPClientGui(QObject):
 
 		# Game window
 		self._game_gui.leaveGameButton.clicked.connect(self._client.leave_game)
+		self.duration_timer.timeout.connect(self.update_game_time)
 		self.connect_board_gui_signals()
 
 
@@ -162,13 +176,36 @@ class SMPClientGui(QObject):
 			self._game_gui.durationLabel.setText(str(0) + ' s')
 			self._client.enter_number(4, 3, 8)  # TODO: remove
 			LOG.critical('GUI entered a fake number. Remove after testing.')
+
+		# Left / kicked out of a game
 		else:
+			self.duration_timer.stop()
 			self.show_lobby_signal.emit()
 			self._lobby_gui.joinGameButton.setEnabled(True)
 
 
 
 	############ GAME UPDATES ###########
+
+	def notify_game_start(self):
+		self.initial_board_setup()
+		# TODO: Show some kind of message somewhere
+		# TODO: timer as a last thing
+		self.duration_timer.start(1000)
+
+	def notify_game_end(self):
+		self.duration_timer.stop()
+		self.update_game_time()
+		# TODO: Set game board uneditable
+		# TODO: show some kind of message somewhere
+
+	def update_game_time(self):
+		gs = self._client._game_state
+		if gs:
+			self._game_gui.durationLabel.setText(str(round(gs.get_duration())) + ' s')
+		else:
+			self._game_gui.durationLabel.setText('Game not started')
+
 	def notify_game_state(self):
 		LOG.debug('GUI game state: {}'.format(self._client._game_state.get_puzzle().solution))
 		self.notify_player_update()
@@ -202,12 +239,46 @@ class SMPClientGui(QObject):
 
 	############ GAME BOARD SLOTS/SIGNALS ############
 
+	def board_gui_setup(self):
+		bt = self._game_gui.boardTable
+		for row in xrange(bt.rowCount()):
+			for col in xrange(bt.columnCount()):
+				cell = QTableWidgetItem('')
+				cell.setTextAlignment(Qt.AlignCenter)
+				bt.setItem(row, col, cell)
+
 	def connect_board_gui_signals(self):
 		LOG.critical('Board GUI signals not connected')
+		self._game_gui.boardTable.cellChanged.connect(self.board_cell_changed)
 
-	def notify_initial_board_received(self, board):
-		# board is a 9x9 list of numbers
+
+	def initial_board_setup(self):
+		with self._client._game_lock:
+			bt = self._game_gui.boardTable
+			bt.blockSignals(True)
+			puzzle = self._client._game_state.get_puzzle()
+
+			for row in xrange(9):
+				for col in xrange(9):
+					cell = bt.item(row, col)
+					if puzzle.initial_state[row][col]:
+						cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
+						cell.setText(str(puzzle.solution[row][col]))
+					else:
+						cell.setFlags(cell.flags() | Qt.ItemIsEditable)
+						cell.setText('')
+
+			bt.blockSignals(False)
+
+
+
 		LOG.critical('GUI initial board setup UNIMPLEMENTED')
+
+	def board_cell_changed(self, row, col):
+		LOG.debug('Board cell changed: {}'.format((row, col)))
+		LOG.debug(self._game_gui.boardTable.item(row, col))
+		LOG.critical('Client: board cell changed. NOT CONNECTED')
+
 
 	def notify_board_update_received(self, board):
 		# board is a 9x9 list of numbers

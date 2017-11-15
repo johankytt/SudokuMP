@@ -9,6 +9,7 @@ from common.smp_player_info import SMPPlayerInfo
 from common.smp_puzzle import SMPPuzzle
 import threading
 from common.smp_common import LOG
+import time
 
 
 class SMPGameState():
@@ -88,6 +89,9 @@ class SMPGameState():
 	def has_started(self):
 		return self._start_time > 0
 
+	def is_running(self):
+		return self.has_started() and not self.has_ended()
+
 	def has_ended(self):
 		return self._end_time > self._start_time
 
@@ -96,6 +100,14 @@ class SMPGameState():
 
 	def set_end_time(self, t):
 		self._end_time = t
+
+	def get_duration(self):
+		if self.has_ended():
+			return self._end_time - self._start_time
+		elif self.is_running():
+			return time.time() - self._start_time
+		else:
+			return 0
 
 	def get_puzzle(self):
 		return self._puzzle

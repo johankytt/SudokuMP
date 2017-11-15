@@ -30,6 +30,8 @@ class MSG():
 	GSTATE = 0x20  # Send full game state
 	GPUPDATE = 0x21  # Send player update
 	GBUPDATE = 0x22  # Send board update
+	GSTART = 0x23  # Send game start notification
+	GEND = 0x24  # Send game end notification
 
 
 

@@ -139,7 +139,9 @@ class SMPServerGame():
 		'''
 		if not self._game_state.has_started():
 			self._game_state.set_start_time(time.time())
-			# TODO:
+			for c in self._clients:
+				c.send_game_start(self._game_state._start_time)
+
 			LOG.critical('Send all players start time update UNIMPLEMENTED')
 
 	def stop_game(self):
@@ -150,7 +152,9 @@ class SMPServerGame():
 		'''
 		if not self._game_state.has_ended():
 			self._game_state.set_end_time(time.time())
-			# TODO:
+			for c in self._clients:
+				c.send_game_end(self._game_state._end_time)
+
 			LOG.critical('Send all players game end notification UNIMPLEMENTED')
 
 

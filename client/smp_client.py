@@ -47,7 +47,7 @@ class SMPClient():
 
 
 	def disconnect(self, blocking=False):
-		LOG.info('SMPClient disconnect()')
+		LOG.debug('SMPClient disconnect()')
 		self._client_net.disconnect()
 		with self._game_lock:
 			self._game_state = None
@@ -107,9 +107,11 @@ class SMPClient():
 	def get_game_list(self):
 		if self._client_net:
 			self._client_net.req_game_info_list()
+			LOG.info('Game list updated')
 
 	def join_game(self, gid):
 		self._client_net.req_join_game(gid)
+		LOG.info('Joined game {}'.format(gid))
 
 	def leave_game(self):
 		self._client_net.req_leave_game()

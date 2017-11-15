@@ -10,8 +10,6 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import sys
 
 
-# TODO: Add command line configuration options
-
 if __name__ == '__main__':
 	LOG.info('Starting SudokuMP server')
 

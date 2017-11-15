@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>853</width>
-    <height>661</height>
+    <width>850</width>
+    <height>660</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,6 +49,11 @@
          <width>271</width>
          <height>271</height>
         </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>14</pointsize>
+        </font>
        </property>
        <property name="verticalScrollBarPolicy">
         <enum>Qt::ScrollBarAlwaysOff</enum>

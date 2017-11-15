@@ -38,6 +38,9 @@ class SMPPlayerInfo(object):
 		self._score += update
 		self._score = max(min(127, self._score), -127)  # Clamp score to [-127,127]
 
+	def get_cid(self):
+		return self._cid
+
 	def get_score(self):
 		return self._score
 

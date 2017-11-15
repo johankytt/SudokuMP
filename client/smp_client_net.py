@@ -77,7 +77,6 @@ class SMPClientNet(threading.Thread):
 		except SMPException as e:
 			LOG.error(str(e))
 
-		# TODO: identify specific exceptions
 
 		finally:
 			LOG.info('SMPClientNet: Network thread done. Closing socket.')
@@ -120,9 +119,10 @@ class SMPClientNet(threading.Thread):
 				cid = 0
 			self._client.set_cid(cid)
 
-		if mhead == MSG.TEXT:
+		elif mhead == MSG.TEXT:
 			LOG.debug('MSG.TEXT received')
-			LOG.critical('Use MSG.TEXT for something')
+			# TODO: Use MSG.TEXT for something
+
 
 		elif mhead == RSP.GLIST:
 			LOG.debug('RSP.GLIST received')
@@ -135,28 +135,23 @@ class SMPClientNet(threading.Thread):
 
 		elif mhead == MSG.GSTATE:
 			LOG.debug('MSG.GSTATE received')
-			# self.handle_GSTATE(data)
 			self._client.game_state_update(data)
 
 		elif mhead == MSG.GPUPDATE:
 			LOG.debug('MSG.GPUPDATE received')
-			# self.handle_GPUPDATE(data)
 			self._client.game_player_update(data)
 
 		elif mhead == MSG.GBUPDATE:
 			LOG.debug('MSG.GBUPDATE received')
-			# self.handle_GBUPDATE(data)
 			self._client.game_board_update(data)
 
 		elif mhead == MSG.GSTART:
 			LOG.debug('MSG.GSTART received')
 			self._client.notify_game_start(smp_network.unpack_uint32(data))
-			LOG.critical('GSTART display user notification')
 
 		elif mhead == MSG.GEND:
 			LOG.debug('MSG.GEND received')
 			self._client.notify_game_end(smp_network.unpack_uint32(data))
-			LOG.critical('GEND display user notification')
 
 		else:
 			LOG.critical('Received unhandled message: {}'.format((mhead, dlen, data)))

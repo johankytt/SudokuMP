@@ -67,10 +67,6 @@ class SMPServerClient(threading.Thread):
 			if not self._bye:
 				LOG.debug('{}: Client closed connection. Terminating client thread.'.format(self))
 
-# 		except Exception as e:
-# 			# TODO: identify specific exceptions
-# 			LOG.error('Unhandled exception: {} in {}'.format(e, self))
-
 		finally:
 			# Disconnect and clean up
 			LOG.info('Disconnecting {}'.format(self))
@@ -107,7 +103,7 @@ class SMPServerClient(threading.Thread):
 		# Note: MSG.BYE is handled in the receiving loop
 
 		if mhead == MSG.CNAME:
-			LOG.info('MSG.CNAME received')
+			LOG.debug('MSG.CNAME received')
 			try:
 				self._pinfo.set_name(msg)
 			except SMPException:
@@ -115,25 +111,25 @@ class SMPServerClient(threading.Thread):
 				LOG.warning('Too long player name given. Truncated to 255.')
 
 		elif mhead == MSG.REQ_GLIST:
-			LOG.info('MSG.REQ_GLIST received')
+			LOG.debug('MSG.REQ_GLIST received')
 			self.send_game_info_list()
 
 		elif mhead == MSG.REQ_GNEW:
-			LOG.info('MSG.REQ_GNEW received')
+			LOG.debug('MSG.REQ_GNEW received')
 			gid = self._server.create_game(smp_network.unpack_uint8(msg))
 			self.join_game_handler(gid)
 
 		elif mhead == MSG.REQ_GJOIN:
-			LOG.info('MSG.REQ_GJOIN received')
+			LOG.debug('MSG.REQ_GJOIN received')
 			gid = smp_network.unpack_uint32(msg)
 			self.join_game_handler(gid)
 
 		elif mhead == MSG.REQ_GLEAVE:
-			LOG.info('MSG.REQ_GLEAVE received')
+			LOG.debug('MSG.REQ_GLEAVE received')
 			self._game.remove_player(self)
 
 		elif mhead == MSG.REQ_GENTRY:
-			LOG.info('MSG.REQ_GENTRY received')
+			LOG.debug('MSG.REQ_GENTRY received')
 			if self._game:
 				row = smp_network.unpack_uint8(msg[0])
 				col = smp_network.unpack_uint8(msg[1])
@@ -186,7 +182,7 @@ class SMPServerClient(threading.Thread):
 	def send_game_eject(self, gid):
 		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
 		LOG.debug('Sent RSP.GJOIN')
-		LOG.critical('servclient: game eject: Implement server to client text messages')
+		# TODO: Send info via MSG.TEXT
 
 	def notify_gjoin(self):
 		if self._game != None:

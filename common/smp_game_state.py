@@ -172,11 +172,6 @@ class SMPGameState():
 
 		curpos = 9
 		idict['playerinfo'] = SMPGameState.unserialize_player_infos(infostr[curpos:])
-# 		while curpos < len(infostr):
-# 			(pi, pilen) = SMPPlayerInfo.unserialize(infostr[curpos:])
-# 			idict['playerinfo'].append(pi)
-# 			curpos += pilen
-# TODO: REMOVE
 		return idict
 
 

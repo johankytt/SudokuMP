@@ -5,8 +5,8 @@ Created on 13. nov 2017
 '''
 from PySide.QtCore import QObject, Signal, Qt, QTimer, QRegExp
 from PySide import QtUiTools
-from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem, QBrush, \
-	QColor, QRegExpValidator
+from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem, \
+	QColor, QRegExpValidator, QFont
 from common.smp_common import LOG
 from common import smp_network
 from client.smp_cell_delegate import SMPCellDelegate
@@ -109,14 +109,17 @@ class SMPClientGui(QObject):
 	############### ACCESS / UTILITY FUNCTIONS ###############
 
 	def show_lobby(self):
+		self._lobby_gui.setGeometry(self._game_gui.geometry())
 		self.duration_timer.stop()  # Just in case to ensure it's stopped
 		self._lobby_gui.show()
 		self._game_gui.hide()
 		self._lobby_gui.refreshGLButton.clicked.emit()
 
 	def show_game(self):
+		self._game_gui.setGeometry(self._lobby_gui.geometry())
 		self._game_gui.show()
 		self._lobby_gui.hide()
+		self.clear_board()
 		self.notify_text_signal.emit('Waiting for Players')
 
 	def set_connected(self, state):
@@ -232,6 +235,14 @@ class SMPClientGui(QObject):
 				pname.setTextAlignment(Qt.AlignCenter)
 				score.setTextAlignment(Qt.AlignCenter)
 
+				if pi.get_cid() == self._client._cid:
+					f = pname.font()
+					f.setWeight(QFont.Bold)
+					pname.setFont(f)
+					score.setFont(f)
+					pname.setForeground(QColor('darkblue'))
+					score.setForeground(QColor('darkblue'))
+
 				pt.setItem(row, 0, pname)
 				pt.setItem(row, 1, score)
 
@@ -271,6 +282,18 @@ class SMPClientGui(QObject):
 				cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
 		bt.blockSignals(False)
 
+	def clear_board(self):
+		# Clears all cells
+		bt = self._game_gui.boardTable
+		bt.blockSignals(True)
+
+		for row in xrange(9):
+			for col in xrange(9):
+				cell = bt.item(row, col)
+				cell.setText('')
+				cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
+		bt.blockSignals(False)
+
 
 	def initial_board_setup(self):
 		with self._client._game_lock:
@@ -284,6 +307,7 @@ class SMPClientGui(QObject):
 
 					# Set initial cells uneditable
 					if puzzle.initial_state[row][col]:
+						cell.setForeground(QColor('darkblue'))
 						cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
 						cell.setText(str(puzzle.solution[row][col]))
 					else:

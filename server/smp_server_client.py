@@ -131,7 +131,6 @@ class SMPServerClient(threading.Thread):
 		elif mhead == MSG.REQ_GLEAVE:
 			LOG.info('MSG.REQ_GLEAVE received')
 			self._game.remove_player(self)
-			self._game = None
 
 		elif mhead == MSG.REQ_GENTRY:
 			LOG.info('MSG.REQ_GENTRY received')
@@ -180,7 +179,7 @@ class SMPServerClient(threading.Thread):
 		smpnet_send_msg(self._sock, RSP.GLIST, self._server.serialize_game_info_list())
 		LOG.debug('Sent game info')
 
-	def notify_game_eject(self, gid):
+	def send_game_eject(self, gid):
 		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
 		LOG.critical('servclient: game eject: Implement server to client text messages')
 
@@ -191,3 +190,20 @@ class SMPServerClient(threading.Thread):
 			gid = 0
 		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(gid))
 		LOG.debug('Sent RSP.GJOIN gid={}'.format(gid))
+
+		if gid:
+			self.send_game_state(self._game.serialize_game_state())
+
+
+
+	def send_game_state(self, gs_serial):
+		smpnet_send_msg(self._sock, MSG.GSTATE, gs_serial)
+		LOG.debug('Sent MSG.GSTATE')
+
+	def send_player_update(self, pi_serial):
+		smpnet_send_msg(self._sock, MSG.GPUPDATE, pi_serial)
+		LOG.debug('Sent MSG.GPUPDATE')
+
+	def send_board_update(self, b_serial):
+		smpnet_send_msg(self._sock, MSG.GBUPDATE, b_serial)
+		LOG.debug('Sent MSG.GBUPDATE')

@@ -38,31 +38,36 @@ class SMPServerGame():
 
 			# Check if client is already playing
 			if client in self._clients:
-				client.notify_gjoin()
-				LOG.critical('Send player and game board update to the specific client')
+				client.notify_gjoin()  # Also sends full game state
 
-			elif self._game_state.add_player(client._pinfo):
+			# If not, add it to the lists
+			elif self._game_state.add_player(client.get_player_info()):
 				self._clients.append(client)
 				client.set_game(self)
 				client.get_player_info().set_score(0)
 				client.notify_gjoin()
 
+				self.send_player_update()
 				LOG.critical('SMPServerGame: notify all players of player list change UNIMPLEMENTED')
 
+				# If all players have joined, start the game
 				if self._game_state.game_full():
 					self._start_game()
 
 
 	def remove_player(self, client):
 		LOG.debug('SMPServerGame: removing player cid={}'.format(client._cid))
-		LOG.critical('SMPServerGame: notify all players of player list change UNIMPLEMENTED')
 
 		with self._client_lock:
 			if client in self._clients:
 				# Remove client
-				self._game_state.remove_player(client._pinfo)
+				self._game_state.remove_player(client.get_player_info())
 				self._clients.remove(client)
-				client.notify_game_eject(self._gid)
+				client.set_game(None)
+				client.send_game_eject(self._gid)
+
+				self.send_player_update()
+				LOG.critical('SMPServerGame: notify all players of player list change UNIMPLEMENTED')
 
 				# If one player remaining, stop the game
 				if len(self._clients) == 1:
@@ -89,6 +94,41 @@ class SMPServerGame():
 		return len(self._clients)
 
 
+	############# CLIENT UPDATES #############
+
+	def send_player_update(self, client=None):
+		'''
+		Send player info update to one or all clients.
+		Must be called from within self._client_lock.
+		'''
+		# TODO: consider wrapping the single client in a list
+		# TODO: then could also create a list of all other clients except the one who got full game state
+		pi_serial = self._game_state.seralize_player_infos()
+
+		if client != None:
+			client.send_player_update(pi_serial)
+		else:
+			for c in self._clients:
+				c.send_player_update(pi_serial)
+
+
+	def send_board_update(self, client=None):
+		'''
+		Send board update to one or all clients.
+		Must be called from within self._client_lock.
+		'''
+		# TODO: consider wrapping the single client in a list
+		# TODO: then could also create a list of all other clients except the one who got full game state
+		b_serial = self._game_state.serialize_current_board()
+
+		if client != None:
+			client.send_board_update(b_serial)
+		else:
+			for c in self._clients:
+				c.send_board_update(b_serial)
+
+
+
 	############### GAME LOGIC ################
 
 	def _start_game(self):
@@ -97,13 +137,20 @@ class SMPServerGame():
 		This function must be called only from another function
 		that already holds the client_lock
 		'''
-		self._game_state.set_start_time(time.time())
-		LOG.critical('Send all players start time update UNIMPLEMENTED')
-		LOG.critical('Send all players game board update UNIMPLEMENTED')
+		if not self._game_state.has_started():
+			self._game_state.set_start_time(time.time())
+			# TODO:
+			LOG.critical('Send all players start time update UNIMPLEMENTED')
 
 	def stop_game(self):
+		'''
+		Stops the game and sends notifications to all players.
+		This function must be called only from another function
+		that already holds the client_lock
+		'''
 		if not self._game_state.has_ended():
 			self._game_state.set_end_time(time.time())
+			# TODO:
 			LOG.critical('Send all players game end notification UNIMPLEMENTED')
 
 
@@ -124,9 +171,6 @@ class SMPServerGame():
 		with self._client_lock:
 			res = self._game_state.enter_number(row, col, value)
 
-			if self._game_state.get_puzzle().check_solution():
-				self.stop_game()
-
 			if res == None:
 				score = 0
 			elif res:
@@ -136,16 +180,23 @@ class SMPServerGame():
 
 			client.get_player_info().add_score(score)
 
+			self.send_board_update()
+			self.send_player_update()
+			if self._game_state.get_puzzle().check_solution():
+				self.stop_game()
+
 			LOG.critical('ServerGame: Send board update to all players UNIMPLEMENTED')
 			LOG.critical('ServerGame: Send player info update to all players UNIMPLEMENTED')
 
 
-	'''
-	def get_scores(self):
-        return sorted(self.__users.items(), key = lambda i: i[1]) # convert dict to array of tuples
-	'''
-
 
 	################# SERIALIZATION ################
+
 	def serialize_game_info(self):
 		return self._game_state.serialize_game_info()
+
+	def serialize_game_state(self):
+		return self._game_state.serialize()
+
+	def serialize_current_board(self):
+		return self._game_state.serialize_current_board()

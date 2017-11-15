@@ -25,6 +25,9 @@ class SMPClientGui(QObject):
 	messagebox_signal = Signal(str)
 	disconnect_signal = Signal()
 	game_list_update_signal = Signal(list)
+	game_state_signal = Signal()
+	player_update_signal = Signal()
+	board_update_signal = Signal()
 
 	def __init__(self, client):
 		'''
@@ -58,6 +61,9 @@ class SMPClientGui(QObject):
 		self.messagebox_signal.connect(self.show_notification)
 		self.disconnect_signal.connect(self.notify_disconnect)
 		self.game_list_update_signal.connect(self.update_game_list)
+		self.game_state_signal.connect(self.notify_game_state)
+		self.player_update_signal.connect(self.notify_player_update)
+		self.board_update_signal.connect(self.notify_board_update)
 
 		# Lobby window
 		self._lobby_gui.playerNameField.textChanged.connect(self.connection_field_changed)
@@ -119,8 +125,9 @@ class SMPClientGui(QObject):
 		self.set_connected(False)
 
 	def update_game_list(self, game_info_list):
-		# try:
-		# rowcnt = len(game_info_list)
+		# game_info_list is a list of dicts.
+		# See description in SMPGameState.unserialize_info_dict()
+
 		self._lobby_gui.gameListTable.setRowCount(0)
 
 		for gi in game_info_list:
@@ -145,12 +152,6 @@ class SMPClientGui(QObject):
 			self._lobby_gui.gameListTable.setItem(row, 4, playernames)
 
 		self._lobby_gui.gameListTable.resizeColumnsToContents()
-
-		# except Exception, e:
-		# 	LOG.error(e.message)
-
-		# game_info_list is a list of dicts.
-		# See description in SMPGameState.unserialize_info_dict()
 		LOG.critical('GUI game list update IN TESTING')
 
 	def notify_game_joined(self, gid):
@@ -159,11 +160,60 @@ class SMPClientGui(QObject):
 			self.show_game_signal.emit()
 			self._game_gui.gidLabel.setText(str(gid))
 			self._game_gui.durationLabel.setText(str(0) + ' s')
-			self._client.enter_number(4, 3, 8)
+			self._client.enter_number(4, 3, 8)  # TODO: remove
 			LOG.critical('GUI entered a fake number. Remove after testing.')
 		else:
 			self.show_lobby_signal.emit()
 			self._lobby_gui.joinGameButton.setEnabled(True)
+
+
+
+	############ GAME UPDATES ###########
+	def notify_game_state(self):
+		LOG.debug('GUI game state: {}'.format(self._client._game_state.get_puzzle().solution))
+		self.notify_player_update()
+		LOG.critical('GUI game state update incomplete')
+		# TODO:
+
+	def notify_player_update(self):
+		pilist = self._client._game_state.get_pinfo()
+		self._game_gui.playersTable.setRowCount(0)
+
+		with self._client._game_state._pinfo_lock:
+			for pi in pilist:
+				row = self._game_gui.playersTable.rowCount()
+				self._game_gui.playersTable.insertRow(row)
+
+				pname = QTableWidgetItem(str(pi.get_name()))
+				score = QTableWidgetItem(str(pi.get_score()))
+				score.setTextAlignment(Qt.AlignCenter)
+
+				self._game_gui.playersTable.setItem(row, 0, pname)
+				self._game_gui.playersTable.setItem(row, 1, score)
+
+			# self._game_gui.playersTable.resizeColumnsToContents()
+
+	def notify_board_update(self):
+		puzzle = self._client._game_state.get_puzzle()
+		LOG.critical('GUI board update UNIMPLEMENTED')
+		# TODO:
+
+
+
+	############ GAME BOARD SLOTS/SIGNALS ############
+
+	def connect_board_gui_signals(self):
+		LOG.critical('Board GUI signals not connected')
+
+	def notify_initial_board_received(self, board):
+		# board is a 9x9 list of numbers
+		LOG.critical('GUI initial board setup UNIMPLEMENTED')
+
+	def notify_board_update_received(self, board):
+		# board is a 9x9 list of numbers
+		LOG.critical('GUI board update UNIMPLEMENTED')
+
+
 
 
 
@@ -213,20 +263,3 @@ class SMPClientGui(QObject):
 		# No game was selected, re-enable join button
 		else:
 			self._lobby_gui.joinGameButton.setEnabled(True)
-
-
-
-
-	############ GAME BOARD SLOTS/SIGNALS ############
-
-	def connect_board_gui_signals(self):
-		LOG.critical('Board GUI signals not connected')
-
-	def notify_initial_board_received(self, board):
-		# board is a 9x9 list of numbers
-		LOG.critical('GUI initial board setup UNIMPLEMENTED')
-
-	def notify_board_update_received(self, board):
-		# board is a 9x9 list of numbers
-		LOG.critical('GUI board update UNIMPLEMENTED')
-

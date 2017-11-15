@@ -77,9 +77,7 @@ class SMPClientNet(threading.Thread):
 		except SMPException as e:
 			LOG.error(str(e))
 
-# 		except Exception as e:
-# 			# TODO: identify specific exceptions
-# 			LOG.critical('SMPClientNet: Unhandled exception: {}'.format(e))
+		# TODO: identify specific exceptions
 
 		finally:
 			LOG.info('SMPClientNet: Network thread done. Closing socket.')
@@ -124,39 +122,60 @@ class SMPClientNet(threading.Thread):
 
 		elif mhead == RSP.GLIST:
 			LOG.debug('RSP.GLIST received')
-			gilist = self.unserialize_game_info_list(data)
-			self._client.notify_game_list_received(gilist)
+			self.handle_GLIST(data)
 
 		elif mhead == RSP.GJOIN:
 			LOG.debug('RSP.GJOIN received')
 			LOG.critical('Compare given and received game id. If they don\'t match, the client was already in another game.')
 			self._client.notify_game_joined(smp_network.unpack_uint32(data))
 
+		elif mhead == MSG.GSTATE:
+			LOG.debug('MSG.GSTATE received')
+			# self.handle_GSTATE(data)
+			self._client.game_state_update(data)
+
+		elif mhead == MSG.GPUPDATE:
+			LOG.debug('MSG.GPUPDATE received')
+			# self.handle_GPUPDATE(data)
+			self._client.game_player_update(data)
+
+		elif mhead == MSG.GBUPDATE:
+			LOG.debug('MSG.GBUPDATE received')
+			# self.handle_GBUPDATE(data)
+			self._client.game_board_update(data)
+
 		else:
 			LOG.critical('Unhandled message: {}'.format((mhead, dlen, data)))
 
 
 
-	# PROTOCOL HANDLERS
+	########### PROTOCOL HANDLERS ############
 
-
-
-
-	def unserialize_game_info_list(self, data):
+	def handle_GLIST(self, msg):
 		gilist = []
 		curpos = 0
 
-		while curpos < len(data):
-			gilen = smp_network.unpack_uint32(data[curpos:curpos + 4])
+		while curpos < len(msg):
+			gilen = smp_network.unpack_uint32(msg[curpos:curpos + 4])
 			curpos += 4
-			gilist.append(SMPGameState.unserialize_info_dict(data[curpos:curpos + gilen]))
+			gilist.append(SMPGameState.unserialize_info_dict(msg[curpos:curpos + gilen]))
 			curpos += gilen
 
-		return gilist
+		self._client.notify_game_list_received(gilist)
+
+
+# 	def handle_GSTATE(self, msg):
+# 		self._client.game_state_update(msg)
+
+# 	def handle_GPUPDATE(self, msg):
+# 		self._client.game_player_update(msg)
+
+# 	def handle_GBUPDATE(self, msg):
+# 		self._client.game_board_update(msg)
 
 
 
-	# REQUEST / SEND FUNCTIONS
+	########### REQUEST / SEND FUNCTIONS ###########
 
 	def send_cname(self):
 		if not smpnet_send_msg(self._sock, MSG.CNAME, self._client._cname):

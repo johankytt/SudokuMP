@@ -27,6 +27,9 @@ class MSG():
 	REQ_GJOIN = 0x12  # Request to join a game
 	REQ_GLEAVE = 0x13  # Request to leave current game
 	REQ_GENTRY = 0x14  # Request to enter a number in the game board
+	GSTATE = 0x20  # Send full game state
+	GPUPDATE = 0x21  # Send player update
+	GBUPDATE = 0x22  # Send board update
 
 
 

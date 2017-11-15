@@ -48,7 +48,6 @@ class SMPServerGame():
 				client.notify_gjoin()
 
 				self.send_player_update()
-				LOG.critical('SMPServerGame: notify all players of player list change UNIMPLEMENTED')
 
 				# If all players have joined, start the game
 				if self._game_state.game_full():
@@ -67,12 +66,10 @@ class SMPServerGame():
 				client.send_game_eject(self._gid)
 
 				self.send_player_update()
-				LOG.critical('SMPServerGame: notify all players of player list change UNIMPLEMENTED')
 
 				# If one player remaining, stop the game
 				if len(self._clients) == 1:
 					self.stop_game()
-					LOG.critical('ServGame ended. End game notification UNIMPLEMENTED')
 
 				# All players left, destroy game
 				elif len(self._clients) == 0:
@@ -142,7 +139,6 @@ class SMPServerGame():
 			for c in self._clients:
 				c.send_game_start(self._game_state._start_time)
 
-			LOG.critical('Send all players start time update UNIMPLEMENTED')
 
 	def stop_game(self):
 		'''
@@ -154,8 +150,6 @@ class SMPServerGame():
 			self._game_state.set_end_time(time.time())
 			for c in self._clients:
 				c.send_game_end(self._game_state._end_time)
-
-			LOG.critical('Send all players game end notification UNIMPLEMENTED')
 
 
 	def enter_number(self, client, row, col, value):
@@ -169,7 +163,7 @@ class SMPServerGame():
 		LOG.debug('ServGame.enter_number(): gid={}, cid={}, {}'.format(self._gid, client._cid, (row, col, value)))
 
 		if not self._game_state.has_started() or self._game_state.has_ended():
-			LOG.critical('Number Entry: game not started or has ended. Is anything needed here???')
+			LOG.critical('Number Entry: game not started or has ended. How did we get here???')
 			return
 
 		with self._client_lock:
@@ -188,9 +182,6 @@ class SMPServerGame():
 			self.send_player_update()
 			if self._game_state.get_puzzle().check_solution():
 				self.stop_game()
-
-			LOG.critical('ServerGame: Send board update to all players UNIMPLEMENTED')
-			LOG.critical('ServerGame: Send player info update to all players UNIMPLEMENTED')
 
 
 

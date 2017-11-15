@@ -3,12 +3,14 @@ Created on 13. nov 2017
 
 @author: Johan
 '''
-from PySide.QtCore import QObject, Signal, Qt, QTimer
+from PySide.QtCore import QObject, Signal, Qt, QTimer, SLOT
 from PySide import QtUiTools, QtGui
-from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem
+from PySide.QtGui import QMessageBox, QIntValidator, QTableWidgetItem, QLineEdit, \
+	QStyledItemDelegate
 from common.smp_common import LOG
 from common import smp_network
 import time
+from client.smp_cell_delegate import SMPCellDelegate
 
 
 class SMPClientGui(QObject):
@@ -72,11 +74,6 @@ class SMPClientGui(QObject):
 		self.messagebox_signal.connect(self.show_notification)
 		self.disconnect_signal.connect(self.notify_disconnect)
 		self.game_list_update_signal.connect(self.update_game_list)
-		self.game_state_signal.connect(self.notify_game_state)
-		self.player_update_signal.connect(self.notify_player_update)
-		self.board_update_signal.connect(self.notify_board_update)
-		self.game_start_signal.connect(self.notify_game_start)
-		self.game_end_signal.connect(self.notify_game_end)
 
 		# Lobby window
 		self._lobby_gui.playerNameField.textChanged.connect(self.connection_field_changed)
@@ -95,8 +92,12 @@ class SMPClientGui(QObject):
 		# Game window
 		self._game_gui.leaveGameButton.clicked.connect(self._client.leave_game)
 		self.duration_timer.timeout.connect(self.update_game_time)
-		self.connect_board_gui_signals()
-
+		self._game_gui.boardTable.cellChanged.connect(self.board_cell_changed)
+		self.game_state_signal.connect(self.notify_game_state)
+		self.player_update_signal.connect(self.notify_player_update)
+		self.board_update_signal.connect(self.notify_board_update)
+		self.game_start_signal.connect(self.notify_game_start)
+		self.game_end_signal.connect(self.notify_game_end)
 
 
 
@@ -166,16 +167,13 @@ class SMPClientGui(QObject):
 			self._lobby_gui.gameListTable.setItem(row, 4, playernames)
 
 		self._lobby_gui.gameListTable.resizeColumnsToContents()
-		LOG.critical('GUI game list update IN TESTING')
 
 	def notify_game_joined(self, gid):
 		LOG.debug('gui.notify_game_joined()')
 		if gid > 0:
 			self.show_game_signal.emit()
 			self._game_gui.gidLabel.setText(str(gid))
-			self._game_gui.durationLabel.setText(str(0) + ' s')
-			self._client.enter_number(4, 3, 8)  # TODO: remove
-			LOG.critical('GUI entered a fake number. Remove after testing.')
+			self.update_game_time()
 
 		# Left / kicked out of a game
 		else:
@@ -208,9 +206,8 @@ class SMPClientGui(QObject):
 
 	def notify_game_state(self):
 		LOG.debug('GUI game state: {}'.format(self._client._game_state.get_puzzle().solution))
+		self._game_gui.gamePlayersLabel.setText('Players (max {})'.format(self._client._game_state._max_player_count))
 		self.notify_player_update()
-		LOG.critical('GUI game state update incomplete')
-		# TODO:
 
 	def notify_player_update(self):
 		pilist = self._client._game_state.get_pinfo()
@@ -230,11 +227,6 @@ class SMPClientGui(QObject):
 
 			# self._game_gui.playersTable.resizeColumnsToContents()
 
-	def notify_board_update(self):
-		puzzle = self._client._game_state.get_puzzle()
-		LOG.critical('GUI board update UNIMPLEMENTED')
-		# TODO:
-
 
 
 	############ GAME BOARD SLOTS/SIGNALS ############
@@ -247,9 +239,7 @@ class SMPClientGui(QObject):
 				cell.setTextAlignment(Qt.AlignCenter)
 				bt.setItem(row, col, cell)
 
-	def connect_board_gui_signals(self):
-		LOG.critical('Board GUI signals not connected')
-		self._game_gui.boardTable.cellChanged.connect(self.board_cell_changed)
+		bt.setItemDelegate(SMPCellDelegate())
 
 
 	def initial_board_setup(self):
@@ -271,18 +261,41 @@ class SMPClientGui(QObject):
 			bt.blockSignals(False)
 
 
-
-		LOG.critical('GUI initial board setup UNIMPLEMENTED')
-
 	def board_cell_changed(self, row, col):
-		LOG.debug('Board cell changed: {}'.format((row, col)))
-		LOG.debug(self._game_gui.boardTable.item(row, col))
-		LOG.critical('Client: board cell changed. NOT CONNECTED')
+		try:
+			value = int(self._game_gui.boardTable.item(row, col).text())
+		except ValueError:
+			value = 0
+		LOG.debug('Board cell changed: {}'.format((row, col, value)))
+		self._client.enter_number(row, col, value)
 
 
-	def notify_board_update_received(self, board):
-		# board is a 9x9 list of numbers
-		LOG.critical('GUI board update UNIMPLEMENTED')
+	def notify_board_update(self):
+		LOG.critical('GUI board update IN TESTING')
+		puzzle = self._client._game_state.get_puzzle()
+		bt = self._game_gui.boardTable
+		bt.blockSignals(True)
+
+		for row in xrange(9):
+			for col in xrange(9):
+				cell = bt.item(row, col)
+
+				if bt.state() == bt.EditingState:
+					if cell.row() == row and cell.column() == col:
+						try:
+							cellvalue = int(cell.text())
+						except ValueError:
+							cellvalue = 0
+
+						if cellvalue != puzzle.current_state[row][col]:
+							bt.closePersistentEditor(cell)
+
+				if puzzle.current_state[row][col]:
+					cell.setText(str(puzzle.current_state[row][col]))
+				else:
+					cell.setText('')
+
+		bt.blockSignals(False)
 
 
 
@@ -328,7 +341,6 @@ class SMPClientGui(QObject):
 		indexes = self._lobby_gui.gameListTable.selectionModel().selectedRows()
 		if indexes:
 			gid = int(self._lobby_gui.gameListTable.item(indexes[0].row(), 0).text())
-			LOG.critical('Selected gid: {}'.format((gid,)))
 			self._client.join_game(gid)
 
 		# No game was selected, re-enable join button

@@ -27,7 +27,6 @@ class SMPClient():
 		self._game_lock = threading.Lock()
 		self._gui = SMPClientGui(self)
 		self._gui.show_lobby()
-		LOG.critical('Client: Replace _gid with _game_state.')
 
 
 	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, cname=''):
@@ -151,8 +150,6 @@ class SMPClient():
 		with self._game_lock:
 			self._game_state = SMPGameState.unserialize(gs_serial)
 			self._gui.game_state_signal.emit()
-			LOG.critical('GUI game state notification UNIMPLEMENTED')
-		# TODO:
 
 	def game_player_update(self, pi_serial):
 		LOG.debug('Client: player update '.format((pi_serial,)))
@@ -160,8 +157,6 @@ class SMPClient():
 			with self._game_lock:
 				self._game_state.set_serialized_players(pi_serial)
 				self._gui.player_update_signal.emit()
-				LOG.critical('GUI player update notification UNIMPLEMENTED')
-		# TODO:
 
 	def game_board_update(self, b_serial):
 		LOG.debug('Client: board update '.format((b_serial,)))
@@ -169,5 +164,3 @@ class SMPClient():
 			with self._game_lock:
 				self._game_state.get_puzzle().unserialize_current(b_serial)
 				self._gui.board_update_signal.emit()
-			LOG.critical('GUI board update notification UNIMPLEMENTED')
-		# TODO:

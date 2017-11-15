@@ -147,10 +147,12 @@ class SMPClientNet(threading.Thread):
 		elif mhead == MSG.GSTART:
 			LOG.debug('MSG.GSTART received')
 			self._client.notify_game_start(smp_network.unpack_uint32(data))
+			LOG.critical('GSTART display user notification')
 
 		elif mhead == MSG.GEND:
 			LOG.debug('MSG.GEND received')
 			self._client.notify_game_end(smp_network.unpack_uint32(data))
+			LOG.critical('GEND display user notification')
 
 		else:
 			LOG.critical('Unhandled message: {}'.format((mhead, dlen, data)))
@@ -171,15 +173,6 @@ class SMPClientNet(threading.Thread):
 
 		self._client.notify_game_list_received(gilist)
 
-
-# 	def handle_GSTATE(self, msg):
-# 		self._client.game_state_update(msg)
-
-# 	def handle_GPUPDATE(self, msg):
-# 		self._client.game_player_update(msg)
-
-# 	def handle_GBUPDATE(self, msg):
-# 		self._client.game_board_update(msg)
 
 
 

@@ -28,16 +28,19 @@ class SMPGameState():
 	_end_time = 0
 
 
-	def __init__(self, gid, max_players):
+	def __init__(self, gid, max_players, generate_puzzle=True):
 		'''
 		Creates a unique game instance
 		@param gid uint A unique game id
 		'''
 		self._gid = gid
 		self._max_player_count = max_players
-		self._puzzle = SMPPuzzle.get_new_puzzle()
 		self._pinfo = []
 		self._pinfo_lock = threading.Lock()
+		if generate_puzzle:
+			self._puzzle = SMPPuzzle.get_new_puzzle()
+
+
 
 
 	def add_player(self, player_info):
@@ -55,11 +58,32 @@ class SMPGameState():
 		with self._pinfo_lock:
 			self._pinfo.remove(player_info)
 
+
+	def set_serialized_players(self, pi_serial):
+		'''
+		Sets the player info list from the serialized string.
+		For client side use only.
+		'''
+		with self._pinfo_lock:
+
+			# Clear old player list
+			while self._pinfo:
+				self._pinfo.pop()
+
+			self._pinfo = SMPGameState.unserialize_player_infos(pi_serial)
+
+
+	def set_pinfo(self, pinfo):
+		with self._pinfo_lock:
+			self._pinfo = pinfo
+
+	def get_pinfo(self):
+		return self._pinfo
+
 	def game_full(self):
 		if len(self._pinfo) == self._max_player_count:
 			return True
 		return False
-
 
 	def has_started(self):
 		return self._start_time > 0
@@ -81,7 +105,34 @@ class SMPGameState():
 
 
 
-	############### GAME INFO ##############
+	############### SERIALIZATION ###############
+
+	def serialize(self):
+		''' Returns serialised game state object '''
+		LOG.debug('Serialising game state, gid={}'.format(self._gid))
+		gs = ''
+		gs += smp_network.pack_uint32(self._gid)
+		gs += smp_network.pack_uint32(self._start_time)
+		gs += smp_network.pack_uint32(self._end_time)
+		gs += smp_network.pack_uint8(self._max_player_count)
+		gs += self._puzzle.serialize()
+
+		for p in self._pinfo:
+			gs += p.serialize()
+		LOG.debug('Serialized game state: gid={}, [{}]'.format(self._gid, (gs,)))
+		return gs
+
+	@staticmethod
+	def unserialize(gs_serial):
+		gs = SMPGameState(0, 0, False)
+		gs._gid = smp_network.unpack_uint32(gs_serial[0:4])
+		gs._start_time = smp_network.unpack_uint32(gs_serial[4:8])
+		gs._end_time = smp_network.unpack_uint32(gs_serial[8:12])
+		gs._max_player_count = smp_network.unpack_uint8(gs_serial[12:13])
+		gs._puzzle = SMPPuzzle.unserialize(gs_serial[13:13 + 3 * 81])
+		gs._pinfo = SMPGameState.unserialize_player_infos(gs_serial[13 + 3 * 81:])
+		return gs
+
 
 	def serialize_game_info(self):
 		''' Returns serialised game info '''
@@ -108,9 +159,33 @@ class SMPGameState():
 		idict['playerinfo'] = []
 
 		curpos = 9
-		while curpos < len(infostr):
-			(pi, pilen) = SMPPlayerInfo.unserialize(infostr[curpos:])
-			idict['playerinfo'].append(pi)
-			curpos += pilen
-
+		idict['playerinfo'] = SMPGameState.unserialize_player_infos(infostr[curpos:])
+# 		while curpos < len(infostr):
+# 			(pi, pilen) = SMPPlayerInfo.unserialize(infostr[curpos:])
+# 			idict['playerinfo'].append(pi)
+# 			curpos += pilen
+# TODO: REMOVE
 		return idict
+
+
+	def seralize_player_infos(self):
+		with self._pinfo_lock:
+			pistr = ''
+			for pi in self._pinfo:
+				pistr += pi.serialize()
+
+			return pistr
+
+	@staticmethod
+	def unserialize_player_infos(pistr):
+		pilist = []
+		curpos = 0
+
+		while curpos < len(pistr):
+			(pi, pilen) = SMPPlayerInfo.unserialize(pistr[curpos:])
+			pilist.append(pi)
+			curpos += pilen
+		return pilist
+
+	def serialize_current_board(self):
+		return self._puzzle.serialize_current()

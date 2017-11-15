@@ -6,6 +6,7 @@ Created on 11. nov 2017
 from common.smp_common import SMPException
 import random, copy
 import threading
+from common import smp_network
 
 class SMPPuzzle():
 	'''
@@ -49,6 +50,7 @@ class SMPPuzzle():
 			for col in xrange(0, 9):
 				if initial[row][col]:
 					self.current_state[row][col] = solution[row][col]
+
 
 
 	#####################################################
@@ -101,6 +103,58 @@ class SMPPuzzle():
 
 	def check_solution(self):
 		return self.current_state == self.solution
+
+
+
+
+	########## SERIALIZATION #############
+
+	def serialize(self):
+		with self.board_lock:
+			p_str = self._serialize_board(self.solution)
+			p_str += self._serialize_board(self.initial_state)
+			p_str += self._serialize_board(self.current_state)
+			return p_str
+
+	@staticmethod
+	def unserialize(p_serial):
+		solution = SMPPuzzle.unserialize_board(p_serial[0:81])
+		initial = SMPPuzzle.unserialize_board(p_serial[81:2 * 81])
+		current = SMPPuzzle.unserialize_board(p_serial[2 * 81:3 * 81])
+
+		p = SMPPuzzle(initial, solution)
+		p.current_state = current
+		return p
+
+	def serialize_current(self):
+		with self.board_lock:
+			return self._serialize_board(self.current_state)
+
+	def unserialize_current(self, cur_serial):
+		with self.board_lock:
+			self.current_state = SMPPuzzle.unserialize_board(cur_serial)
+
+
+	def _serialize_board(self, board):
+		b_str = ''
+
+		for row in board:
+			for n in row:
+				b_str += smp_network.pack_uint8(n)
+
+		return b_str
+
+	@staticmethod
+	def unserialize_board(b_str):
+		board = [None] * 9
+
+		for row in xrange(0, 9):
+			board[row] = [None] * 9
+			for col in xrange(0, 9):
+				board[row][col] = smp_network.unpack_uint8(b_str[row * 9 + col])
+
+		return board
+
 
 	#####################################################
 

@@ -5,7 +5,6 @@ Created on 12. nov 2017
 '''
 from common.smp_common import SMPException
 from common import smp_network
-import math
 
 
 class SMPPlayerInfo(object):
@@ -58,6 +57,10 @@ class SMPPlayerInfo(object):
 
 	@staticmethod
 	def unserialize(pi_str):
+		''' 
+		Unserializes player info object
+		@return tuple, (SMPPlayerInfo, number of bytes used)
+		'''
 		cid = smp_network.unpack_uint32(pi_str[0:4])
 		score = smp_network.unpack_int8(pi_str[4:5])
 		nl = smp_network.unpack_uint8(pi_str[5:6])

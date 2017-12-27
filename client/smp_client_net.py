@@ -7,9 +7,8 @@ Created on 9. nov 2017
 import threading
 import snakemq.link, snakemq.packeter, snakemq.messaging, snakemq.rpc
 from common import smp_network, smp_common
-from common.smp_common import LOG, SMPSocketClosedException, SMPException
-from common.smp_network import MSG, RSP, DEFAULT_HOST, DEFAULT_PORT, \
-    smpnet_recv_head, smpnet_recv_data, smpnet_send_msg
+from common.smp_common import LOG
+from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 from common.smp_game_state import SMPGameState
 
 
@@ -88,6 +87,7 @@ class SMPClientNet(object):
 		self.serverProxy.bye.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqGameList.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqNewGame.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.serverProxy.reqGameJoin.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqGameLeave.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqNumberEntry.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 

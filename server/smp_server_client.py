@@ -4,11 +4,9 @@ Created on 9. nov 2017
 @author: Johan
 '''
 
-import threading, socket
-from common import smp_network, smp_common
+import threading
+from common import smp_common
 from common.smp_common import LOG, SMPSocketClosedException, SMPException
-from common.smp_network import MSG, RSP, \
-	smpnet_send_msg, smpnet_recv_head, smpnet_recv_data
 from common.smp_player_info import SMPPlayerInfo
 import snakemq.link, snakemq.rpc
 
@@ -105,9 +103,10 @@ class SMPServerClient(threading.Thread):
 		self.mqLink.loop()
 
 		# Disconnect and clean up
-		LOG.info('SMPServerClient network loop done, {}'.format(self))
+		self.clientProxy = None
 		self.mqLink.stop()  # Just in case
 		self.mqLink.cleanup()
+		LOG.info('SMPServerClient network loop done, {}'.format(self))
 
 		# Clean up if client initiated disconnect
 		if not self._bye:
@@ -195,22 +194,22 @@ class SMPServerClient(threading.Thread):
 
 	def send_game_info_list(self):
 		''' Sends information about all available games to the client '''
-		# smpnet_send_msg(self._sock, RSP.GLIST, self._server.serialize_game_info_list())
 		self.clientProxy.updateGameInfoList(self._server.serialize_game_info_list())
 		LOG.debug('Sent game info list')
 
 	def send_game_eject(self, gid):  # @UnusedVariable
-		# smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
 		# TODO: Send info via MSG.TEXT
-		self.clientProxy.notifyGameJoin(0)
-		LOG.debug('Sent game eject message')
+		# The proxy won't be available if the server unexpectedly disconnects
+		if self.clientProxy:
+			self.clientProxy.notifyGameJoin(0)
+			LOG.debug('Sent game eject message')
 
 	def notify_gjoin(self):
 		if self._game != None:
 			gid = self._game.get_gid()
 		else:
 			gid = 0
-		# smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(gid))
+
 		self.clientProxy.notifyGameJoin(gid)
 		LOG.debug('Notified client: notifyGameJoin gid={}'.format(gid))
 
@@ -218,26 +217,23 @@ class SMPServerClient(threading.Thread):
 			self.send_game_state(self._game.serialize_game_state())
 
 	def send_game_state(self, gs_serial):
-		# smpnet_send_msg(self._sock, MSG.GSTATE, gs_serial)
 		self.clientProxy.updateGameState(gs_serial)
 		LOG.debug('Sent MSG.GSTATE')
 
 	def send_player_update(self, pi_serial):
-		# smpnet_send_msg(self._sock, MSG.GPUPDATE, pi_serial)
 		self.clientProxy.updatePlayers(pi_serial)
 		LOG.debug('Sent MSG.GPUPDATE')
 
 	def send_board_update(self, b_serial):
-		# smpnet_send_msg(self._sock, MSG.GBUPDATE, b_serial)
 		self.clientProxy.updateGameBoard(b_serial)
 		LOG.debug('Sent MSG.GBUPDATE')
 
 	def send_game_start(self, starttime):
-		# smpnet_send_msg(self._sock, MSG.GSTART, smp_network.pack_uint32(starttime))
 		self.clientProxy.notifyGameStart(starttime)
 		LOG.debug('Sent MSG.GSTART')
 
 	def send_game_end(self, endtime):
-		# smpnet_send_msg(self._sock, MSG.GEND, smp_network.pack_uint32(endtime))
-		self.clientProxy.notifyGameEnd(endtime)
-		LOG.debug('Sent MSG.GEND')
+		# The proxy won't be available if the server unexpectedly disconnects
+		if self.clientProxy:
+			self.clientProxy.notifyGameEnd(endtime)
+			LOG.debug('Sent MSG.GEND')

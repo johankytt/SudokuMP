@@ -12,19 +12,13 @@ class SMPPlayerInfo(object):
 	Representation of player info in a game session
 	'''
 
-	_cid = 0  # Unique client id
-	_cname = ''  # Player name
-	_score = 0  # Current score
-
-
 	def __init__(self, cid, name='', score=0):
-		self.set_name(name)
-		self._cid = cid
-		self._score = score
+		self.set_name(name)  # Player name
+		self._cid = cid  # Unique client id
+		self._score = score  # Current score
 
 	def __str__(self):
 		return 'SMPPlayerInfo[cid={}, cname={}, score={}]'.format(self._cid, self._cname, self._score)
-
 
 	def set_name(self, name):
 		if len(name) > 255:
@@ -47,7 +41,6 @@ class SMPPlayerInfo(object):
 	def get_name(self):
 		return self._cname
 
-
 	########### SERIALIZATION ###########
 
 	def serialize(self):
@@ -56,7 +49,6 @@ class SMPPlayerInfo(object):
 		pistr += smp_network.pack_uint8(len(self._cname))
 		pistr += self._cname
 		return pistr
-
 
 	@staticmethod
 	def unserialize(pi_str):

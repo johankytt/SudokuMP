@@ -86,8 +86,9 @@ class SMPClientNet(object):
 
 		# Configure signal functions
 		self.serverProxy.bye.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
-		self.serverProxy.req_glist.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
-		self.serverProxy.req_newgame.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.serverProxy.reqGameList.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.serverProxy.reqNewGame.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.serverProxy.reqGameLeave.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 
 		# TODO: Add callbacks
 		# self.mqMessaging.on_disconnect.add(self.serverDisconnect)
@@ -185,56 +186,44 @@ class SMPClientNet(object):
 		LOG.debug('SMPClientNet.updateGameState()')
 		self._client.game_state_update(gsSerial)
 
-	#### NETWORK PROTOCOL HANDLING ####
+	@snakemq.rpc.as_signal
+	def updatePlayers(self, serialData):
+		LOG.debug('MSG.GPUPDATE received')
+		self._client.game_player_update(serialData)
 
-	def handle_message(self, mhead, dlen, data):
-		''' Process the received messages '''
+	@snakemq.rpc.as_signal
+	def updateGameBoard(self, serialData):
+		LOG.debug('MSG.GBUPDATE received')
+		self._client.game_board_update(serialData)
 
-# 		if mhead == MSG.TEXT:
-# 			LOG.debug('MSG.TEXT received')
-# 			# TODO: Use MSG.TEXT for something
+	@snakemq.rpc.as_signal
+	def notifyGameStart(self, startTime):
+		LOG.debug('MSG.GSTART received')
+		self._client.notify_game_start(startTime)
 
-# 		if mhead == MSG.GSTATE:
-# 			LOG.debug('MSG.GSTATE received')
-# 			self._client.game_state_update(data)
-
-		if mhead == MSG.GPUPDATE:
-			LOG.debug('MSG.GPUPDATE received')
-			self._client.game_player_update(data)
-
-		elif mhead == MSG.GBUPDATE:
-			LOG.debug('MSG.GBUPDATE received')
-			self._client.game_board_update(data)
-
-		elif mhead == MSG.GSTART:
-			LOG.debug('MSG.GSTART received')
-			self._client.notify_game_start(smp_network.unpack_uint32(data))
-
-		elif mhead == MSG.GEND:
-			LOG.debug('MSG.GEND received')
-			self._client.notify_game_end(smp_network.unpack_uint32(data))
-
-		else:
-			LOG.critical('Received unhandled message: {}'.format((mhead, dlen, data)))
+	@snakemq.rpc.as_signal
+	def notifyGameEnd(self, endTime):
+		LOG.debug('MSG.GEND received')
+		self._client.notify_game_end(endTime)
 
 	########### REQUEST / SEND FUNCTIONS ###########
 
 	def req_game_info_list(self):
-		self.serverProxy.req_glist()
+		self.serverProxy.reqGameList()
 		LOG.debug('Sent game info request')
 
 	def req_new_game(self, max_players):
-		self.serverProxy.req_newgame(max_players)
+		self.serverProxy.reqNewGame(max_players)
 		LOG.debug('Sent new game request')
 
 	def req_join_game(self, gid):
-		# TODO:
-		smpnet_send_msg(self._sock, MSG.REQ_GJOIN, smp_network.pack_uint32(gid))
+		# smpnet_send_msg(self._sock, MSG.REQ_GJOIN, smp_network.pack_uint32(gid))
+		self.serverProxy.reqGameJoin(gid)
 		LOG.debug('Sent join game request, gid={}'.format(gid))
 
 	def req_leave_game(self):
-		# TODO:
-		smpnet_send_msg(self._sock, MSG.REQ_GLEAVE, '')
+		# smpnet_send_msg(self._sock, MSG.REQ_GLEAVE, '')
+		self.serverProxy.reqGameLeave()
 		LOG.debug('Sent leave game request')
 
 	def req_enter_number(self, row, col, value):

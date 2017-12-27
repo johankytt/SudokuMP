@@ -162,23 +162,11 @@ class SMPServerClient(threading.Thread):
 		LOG.debug('MSG.REQ_GLEAVE received')
 		self._game.remove_player(self)
 
-	#### NETWORK PROTOCOL HANDLING ####
-
-	def handle_message(self, mhead, dlen, msg):
-		''' Process the received messages '''
-
-		# Note: MSG.BYE is handled in the receiving loop
-
-		if mhead == MSG.REQ_GENTRY:
-			# TODO:
-			LOG.debug('MSG.REQ_GENTRY received')
-			if self._game:
-				row = smp_network.unpack_uint8(msg[0])
-				col = smp_network.unpack_uint8(msg[1])
-				value = smp_network.unpack_uint8(msg[2])
-				self._game.enter_number(self, row, col, value)
-		else:
-			LOG.critical('Received unhandled message: {}'.format((mhead, dlen, msg)))
+	@snakemq.rpc.as_signal
+	def reqNumberEntry(self, row, col, value):
+		LOG.debug('MSG.REQ_GENTRY received')
+		if self._game:
+			self._game.enter_number(self, row, col, value)
 
 	##### OTHER HANDLERS #####
 

@@ -89,6 +89,7 @@ class SMPClientNet(object):
 		self.serverProxy.reqGameList.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqNewGame.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqGameLeave.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.serverProxy.reqNumberEntry.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 
 		# TODO: Add callbacks
 		# self.mqMessaging.on_disconnect.add(self.serverDisconnect)
@@ -102,20 +103,13 @@ class SMPClientNet(object):
 		''' Main client network loop '''
 		self.mqLink.loop()  # , kwargs={'count':5})
 
-# 		try:
-# 			while True:
-# 				d = smpnet_recv_data(self._sock, dlen)
-# 				LOG.debug('Received data: ' + str((dlen, d)))
-# 				if d != None:
-# 					self.handle_message(mhead, dlen, d)
-#
 # 		except SMPSocketClosedException:
 # 			if not self._bye:
 # 				LOG.info('SMPClientNet: Connection unexpectedly closed. Terminating network thread.')
 #
 # 		except SMPException as e:
 # 			LOG.error(str(e))
-#
+
 		LOG.info('SMPClientNet: Network thread done. Closing connection.')
 		self.mqLink.stop()  # Just in case
 		self.mqLink.cleanup()
@@ -227,10 +221,10 @@ class SMPClientNet(object):
 		LOG.debug('Sent leave game request')
 
 	def req_enter_number(self, row, col, value):
-		# TODO:
-		msg = 	smp_network.pack_uint8(row) + \
-			 	smp_network.pack_uint8(col) + \
-			 	smp_network.pack_uint8(value)
+		# msg = 	smp_network.pack_uint8(row) + \
+		# 	 	smp_network.pack_uint8(col) + \
+		# 	 	smp_network.pack_uint8(value)
 
-		smpnet_send_msg(self._sock, MSG.REQ_GENTRY, msg)
+		# smpnet_send_msg(self._sock, MSG.REQ_GENTRY, msg)
+		self.serverProxy.reqNumberEntry(row, col, value)
 		LOG.debug('Sent MGS.REQ_GENTRY {}'.format((row, col, value)))

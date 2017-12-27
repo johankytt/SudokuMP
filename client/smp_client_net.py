@@ -154,6 +154,7 @@ class SMPClientNet(object):
 		self.mqLink.stop()
 
 	##### RPC FUNCTIONS #####
+
 	@snakemq.rpc.as_signal
 	def updateGameInfoList(self, msg):
 		'''
@@ -175,8 +176,14 @@ class SMPClientNet(object):
 	@snakemq.rpc.as_signal
 	def notifyGameJoin(self, gameid):
 		LOG.debug('SMPClientNet.notifyGameJoin()')
-		# TODO: LOG.critical('Compare given and received game id. If they don\'t match, the client was already in another game.')
+		# TODO: LOG.critical('Compare given and received game id. ' +
+		# 'If they don\'t match, the client was already in another game.')
 		self._client.notify_game_joined(gameid)
+
+	@snakemq.rpc.as_signal
+	def updateGameState(self, gsSerial):
+		LOG.debug('SMPClientNet.updateGameState()')
+		self._client.game_state_update(gsSerial)
 
 	#### NETWORK PROTOCOL HANDLING ####
 
@@ -187,11 +194,11 @@ class SMPClientNet(object):
 # 			LOG.debug('MSG.TEXT received')
 # 			# TODO: Use MSG.TEXT for something
 
-		if mhead == MSG.GSTATE:
-			LOG.debug('MSG.GSTATE received')
-			self._client.game_state_update(data)
+# 		if mhead == MSG.GSTATE:
+# 			LOG.debug('MSG.GSTATE received')
+# 			self._client.game_state_update(data)
 
-		elif mhead == MSG.GPUPDATE:
+		if mhead == MSG.GPUPDATE:
 			LOG.debug('MSG.GPUPDATE received')
 			self._client.game_player_update(data)
 
@@ -217,8 +224,7 @@ class SMPClientNet(object):
 		LOG.debug('Sent game info request')
 
 	def req_new_game(self, max_players):
-		# TODO:
-		smpnet_send_msg(self._sock, MSG.REQ_GNEW, smp_network.pack_uint8(max_players))
+		self.serverProxy.req_newgame(max_players)
 		LOG.debug('Sent new game request')
 
 	def req_join_game(self, gid):

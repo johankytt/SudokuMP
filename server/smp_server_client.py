@@ -70,6 +70,7 @@ class SMPServerClient(threading.Thread):
 		self.clientProxy.bye.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.clientProxy.updateGameInfoList.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.clientProxy.notifyGameJoin.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.clientProxy.updateGameState.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 
 	##### UTILITY FUNCTIONS #####
 
@@ -159,15 +160,18 @@ class SMPServerClient(threading.Thread):
 # 			self.join_game_handler(gid)
 
 		if mhead == MSG.REQ_GJOIN:
+			# TODO:
 			LOG.debug('MSG.REQ_GJOIN received')
 			gid = smp_network.unpack_uint32(msg)
 			self.join_game_handler(gid)
 
 		elif mhead == MSG.REQ_GLEAVE:
+			# TODO:
 			LOG.debug('MSG.REQ_GLEAVE received')
 			self._game.remove_player(self)
 
 		elif mhead == MSG.REQ_GENTRY:
+			# TODO:
 			LOG.debug('MSG.REQ_GENTRY received')
 			if self._game:
 				row = smp_network.unpack_uint8(msg[0])
@@ -181,7 +185,7 @@ class SMPServerClient(threading.Thread):
 	@snakemq.rpc.as_signal
 	def req_glist(self):
 		LOG.debug('SMPServerClient: req_glist()')
-		self.clientProxy.updateGameInfoList(self._server.serialize_game_info_list())
+		self.send_game_info_list()
 
 	@snakemq.rpc.as_signal
 	def req_newgame(self, maxPlayers):
@@ -211,25 +215,21 @@ class SMPServerClient(threading.Thread):
 
 	# SEND FUNCTIONS
 
-	def send_cid(self):
-		''' Sends the unique client id to the remote client. '''
-		if not smpnet_send_msg(self._sock, MSG.CID, smp_network.pack_uint32(self._cid)):
-			raise SMPException('Unable to send client id. Disconnecting.')
-		LOG.debug('Sent client id')
-
-	def send_text(self, msg):
-		smpnet_send_msg(self._sock, MSG.TEXT, msg)
-		LOG.debug('Sent MSG.TEXT')
+# 	def send_text(self, msg):
+# 		smpnet_send_msg(self._sock, MSG.TEXT, msg)
+# 		LOG.debug('Sent MSG.TEXT')
 
 	def send_game_info_list(self):
 		''' Sends information about all available games to the client '''
-		smpnet_send_msg(self._sock, RSP.GLIST, self._server.serialize_game_info_list())
-		LOG.debug('Sent RSP.GLIST')
+		# smpnet_send_msg(self._sock, RSP.GLIST, self._server.serialize_game_info_list())
+		self.clientProxy.updateGameInfoList(self._server.serialize_game_info_list())
+		LOG.debug('Sent game info list')
 
 	def send_game_eject(self, gid):
-		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
-		LOG.debug('Sent RSP.GJOIN')
+		# smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(0))
 		# TODO: Send info via MSG.TEXT
+		self.clientProxy.notifyGameJoin(0)
+		LOG.debug('Sent game eject message')
 
 	def notify_gjoin(self):
 		if self._game != None:
@@ -238,27 +238,32 @@ class SMPServerClient(threading.Thread):
 			gid = 0
 		# smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(gid))
 		self.clientProxy.notifyGameJoin(gid)
-		LOG.debug('Called client notifyGameJoin gid={}'.format(gid))
+		LOG.debug('Notified client: notifyGameJoin gid={}'.format(gid))
 
 		if gid:
 			self.send_game_state(self._game.serialize_game_state())
 
 	def send_game_state(self, gs_serial):
-		smpnet_send_msg(self._sock, MSG.GSTATE, gs_serial)
-		LOG.debug('Sent MSG.GSTATE')
+		self.clientProxy.updateGameState(gs_serial)
+		# smpnet_send_msg(self._sock, MSG.GSTATE, gs_serial)
+		LOG.debug('Sent game state update')
 
 	def send_player_update(self, pi_serial):
+		# TODO:
 		smpnet_send_msg(self._sock, MSG.GPUPDATE, pi_serial)
 		LOG.debug('Sent MSG.GPUPDATE')
 
 	def send_board_update(self, b_serial):
+		# TODO:
 		smpnet_send_msg(self._sock, MSG.GBUPDATE, b_serial)
 		LOG.debug('Sent MSG.GBUPDATE')
 
 	def send_game_start(self, starttime):
+		# TODO:
 		smpnet_send_msg(self._sock, MSG.GSTART, smp_network.pack_uint32(starttime))
 		LOG.debug('Sent MSG.GSTART')
 
 	def send_game_end(self, endtime):
+		# TODO:
 		smpnet_send_msg(self._sock, MSG.GEND, smp_network.pack_uint32(endtime))
 		LOG.debug('Sent MSG.GEND')

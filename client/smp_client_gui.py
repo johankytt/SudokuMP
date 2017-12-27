@@ -29,6 +29,7 @@ class SMPClientGui(QObject):
 	notify_text_signal = Signal(str)
 
 	disconnect_signal = Signal()
+	connect_signal = Signal()
 	game_join_signal = Signal(int)
 	game_list_update_signal = Signal(list)
 
@@ -67,8 +68,6 @@ class SMPClientGui(QObject):
 		self._game_gui.notificationsArea.setAlignment(Qt.AlignCenter)
 		self.board_gui_setup()
 
-
-
 	def connect_signals(self):
 		# Notification signals
 		self.show_lobby_signal.connect(self.show_lobby)
@@ -77,6 +76,7 @@ class SMPClientGui(QObject):
 		self.notify_msgbox_signal.connect(self.show_msgbox)
 		self.notify_text_signal.connect(self.show_textnotif)
 		self.disconnect_signal.connect(self.notify_disconnect)
+		self.connect_signal.connect(self.notify_connect)
 		self.game_list_update_signal.connect(self.update_game_list)
 
 		# Lobby window
@@ -102,9 +102,6 @@ class SMPClientGui(QObject):
 		self.board_update_signal.connect(self.notify_board_update)
 		self.game_start_signal.connect(self.notify_game_start)
 		self.game_end_signal.connect(self.notify_game_end)
-
-
-
 
 	############### ACCESS / UTILITY FUNCTIONS ###############
 
@@ -132,9 +129,6 @@ class SMPClientGui(QObject):
 		self._lobby_gui.joinGameButton.setEnabled(state)
 		self._lobby_gui.maxPlayersField.setEnabled(state)
 
-
-
-
 	######### EXTERNAL NOTIFICATION RECEIVERS ########
 
 	def show_msgbox(self, msg):
@@ -150,6 +144,11 @@ class SMPClientGui(QObject):
 		LOG.debug('GUI received disconnect notification')
 		self.show_lobby_signal.emit()
 		self.set_connected(False)
+
+	def notify_connect(self):
+		LOG.debug('GUI received connect notification')
+		self.set_connected(True)
+		self._lobby_gui.refreshGLButton.clicked.emit()
 
 	def update_game_list(self, game_info_list):
 		# game_info_list is a list of dicts.
@@ -192,8 +191,6 @@ class SMPClientGui(QObject):
 			self.show_lobby_signal.emit()
 			self._lobby_gui.joinGameButton.setEnabled(True)
 
-
-
 	############ GAME UPDATES ###########
 
 	def notify_game_start(self):
@@ -213,8 +210,6 @@ class SMPClientGui(QObject):
 			self.notify_text_signal.emit('YOU WIN')
 		else:
 			self.notify_text_signal.emit('{} WINS'.format(pilist[0].get_name()))
-
-
 
 	def update_game_time(self):
 		gs = self._client._game_state
@@ -257,8 +252,6 @@ class SMPClientGui(QObject):
 		pt.sortItems(1, Qt.DescendingOrder)
 		# self._game_gui.playersTable.resizeColumnsToContents()
 
-
-
 	############ GAME BOARD SLOTS/SIGNALS ############
 
 	def board_gui_setup(self):
@@ -277,7 +270,6 @@ class SMPClientGui(QObject):
 				bt.setItem(row, col, cell)
 
 		bt.setItemDelegate(SMPCellDelegate())
-
 
 	def disable_board(self):
 		# Sets all cells uneditable
@@ -302,7 +294,6 @@ class SMPClientGui(QObject):
 				cell.setFlags(cell.flags() & (~Qt.ItemIsEditable))
 		bt.blockSignals(False)
 
-
 	def initial_board_setup(self):
 		with self._client._game_lock:
 			bt = self._game_gui.boardTable
@@ -324,7 +315,6 @@ class SMPClientGui(QObject):
 
 			bt.blockSignals(False)
 
-
 	def board_cell_changed(self, row, col):
 		try:
 			value = int(self._game_gui.boardTable.item(row, col).text())
@@ -332,7 +322,6 @@ class SMPClientGui(QObject):
 			value = 0
 		LOG.debug('Board cell changed: {}'.format((row, col, value)))
 		self._client.enter_number(row, col, value)
-
 
 	def notify_board_update(self):
 		puzzle = self._client._game_state.get_puzzle()
@@ -360,10 +349,6 @@ class SMPClientGui(QObject):
 
 		bt.blockSignals(False)
 
-
-
-
-
 	############ LOBBY WINDOW SLOTS ##############
 
 	def connection_field_changed(self, _):
@@ -376,27 +361,26 @@ class SMPClientGui(QObject):
 		else:
 			self._lobby_gui.connectButton.setEnabled(True)
 
-
 	def max_players_changed(self, text):
 		self._lobby_gui.newGameButton.setEnabled(len(text) > 0)
 
-
 	def connect_server(self):
+		self._lobby_gui.connectButton.setEnabled(False)
+
 		cname = self._lobby_gui.playerNameField.text()
 		addr = self._lobby_gui.addressField.text()
 		port = int(self._lobby_gui.portField.text())
 
-		if self._client.connect(addr=addr, port=port, cname=cname):
-			self.set_connected(True)
-			self._lobby_gui.refreshGLButton.clicked.emit()
-
+		self._client.connect(addr=addr, port=port, cname=cname)
+# 		if self._client.connect(addr=addr, port=port, cname=cname):
+# 			self.set_connected(True)
+# 			self._lobby_gui.refreshGLButton.clicked.emit()
 
 	def create_game(self):
 		LOG.debug('ClientGui: Create game clicked.')
 		max_players = int(self._lobby_gui.maxPlayersField.text())
 		LOG.debug('ClientGui: max_players={}'.format(max_players))
 		self._client.create_game(max_players)
-
 
 	def join_game_clicked(self):
 		# Disable join button so several simultaneous join requests can't be made

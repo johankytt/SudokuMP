@@ -4,15 +4,15 @@ Created on 9. nov 2017
 @author: Johan
 '''
 
-import threading
-from common import smp_network
+import threading, socket
+from common import smp_network, smp_common
 from common.smp_common import LOG, SMPSocketClosedException, SMPException
 from common.smp_network import MSG, RSP, \
 	smpnet_send_msg, smpnet_recv_head, smpnet_recv_data
-import socket
 from common.smp_player_info import SMPPlayerInfo
+import snakemq.link, snakemq.rpc
 
-BUFFER_SIZE = 1024
+# BUFFER_SIZE = 1024
 
 
 class SMPServerClient(threading.Thread):
@@ -21,79 +21,118 @@ class SMPServerClient(threading.Thread):
 	Mainly network protocol related things
 	'''
 
-	_sock = None
-	_server = None  # Reference to the main server object
-	_cid = 0  # Unique client id created by the server. 0 = not assigned / invalid.
-	_pinfo = None  # An instance of SMPPlayerInfo
-	_game = None  # Reference to the SMPServerGame that the client has joined
-	_bye = False  # Set to true when the server forcefully disconnects the client
-
-	def __init__(self, cid, client_sock, server):
+	def __init__(self, cid, serverip, server):
 		super(SMPServerClient, self).__init__(name='Client_{}'.format(cid))
-		self._cid = cid
-		self._sock = client_sock
-		self._server = server
-		self._pinfo = SMPPlayerInfo(cid)
+		self._cid = cid  # Unique client id created by the server. 0 = not assigned / invalid.
+		self._server = server  # Reference to the main server object
+
+		self.clientProxy = None
+		self.setupNetwork(serverip)
+
+		self._pinfo = SMPPlayerInfo(cid)  # An instance of SMPPlayerInfo
+		self._game = None  # Reference to the SMPServerGame that the client has joined
+		self._bye = False  # Set to true when the server forcefully disconnects the client
+
+	##### NETWORK INTERFACE #####
+
+	def setupNetwork(self, serverip):
+		''' Sets up the snakemq rpc interface '''
+		self.mqLink = snakemq.link.Link()
+		self._laddr = self.mqLink.add_listener((serverip, 0))
+
+		self.mqPacketer = snakemq.packeter.Packeter(self.mqLink)
+		self.mqMessaging = snakemq.messaging.Messaging(
+			smp_common.CLIENT_HANDLER_ID.format(self._cid), "", self.mqPacketer
+		)
+
+		self.mqReceiveHook = snakemq.messaging.ReceiveHook(self.mqMessaging)
+		self.mqRpcClient = snakemq.rpc.RpcClient(self.mqReceiveHook)  # For obtaining client interface
+
+		self.mqRpcServer = snakemq.rpc.RpcServer(self.mqReceiveHook)
+		self.mqRpcServer.transfer_exceptions = False
+		self.mqRpcServer.register_object(self,
+			smp_common.CLIENT_HANDLER_RPC_NAME.format(self._cid)  # @UndefinedVariable
+		)
+
+		# Add callbacks
+		self.mqMessaging.on_connect.add(self.clientConnect)
+
+	def clientConnect(self, cid, cname):
+		'''
+		Called when a client reconnects directly to the
+		SMPServerClient instance
+		'''
+
+		LOG.debug('ClientConnect: {}, {}'.format(cid, cname))
+
+		# Get client proxy and configure signal functions
+		self.clientProxy = self.mqRpcClient.get_proxy(cname, cname + smp_common.RPC_EXT)
+		self.clientProxy.bye.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.clientProxy.updateGameInfoList.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.clientProxy.notifyGameJoin.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+
+	##### UTILITY FUNCTIONS #####
 
 	def __str__(self):
 		return 'SMPServerClient:{}'.format(self._cid)
 
-	def set_game(self, g):
-		self._game = g
+	def getAddress(self):
+		return self._laddr
+
+	def get_cid(self):
+		return self._cid
 
 	def get_player_info(self):
 		return self._pinfo
 
+	def set_cname(self, name):
+		self._pinfo.set_name(name)
+
+	def set_game(self, g):
+		self._game = g
+
+	##### MAIN LOOP #####
+
 	def run(self):
-		try:
-			self.send_cid()
+		LOG.debug('SMPServerClient: starting mq loop ')
 
-			while True:
-				(mhead, dlen) = smpnet_recv_head(self._sock)
-				LOG.debug('Received header: ' + str((mhead, dlen)))
+		# Loop until externally stopped
+		self.mqLink.loop()
 
-				# If the remote client disconnected,
-				# stop the thread and tell the server to clean up
-				if mhead == MSG.BYE:
-					LOG.debug('MSG.BYE received')
-					break
+		# Disconnect and clean up
+		LOG.info('SMPServerClient network loop done, {}'.format(self))
+		self.mqLink.stop()  # Just in case
+		self.mqLink.cleanup()
 
-				d = smpnet_recv_data(self._sock, dlen)
-				LOG.debug('Received data: ' + str((dlen, d)))
-				if d != None:
-					self.handle_message(mhead, dlen, d)
+		# Clean up if client initiated disconnect
+		if not self._bye:
+			self._server.client_disconnect(self)
 
-		except SMPSocketClosedException:
-			if not self._bye:
-				LOG.debug('{}: Client closed connection. Terminating client thread.'.format(self))
+	##### NETWORK UTILITIES #####
 
-		finally:
-			# Disconnect and clean up
-			LOG.info('Disconnecting {}'.format(self))
-			if self._sock != None:
-				self._sock.close()
-				self._sock = None
-
-			if not self._bye:
-				self._server.client_disconnect(self)
-
+	def stop(self):
+		self.mqLink.stop()
 
 	def notify_disconnect(self):
 		'''
 		Sends the disconnect message to the client.
 		Client should close the socket on receipt.
 		'''
-		smpnet_send_msg(self._sock, MSG.BYE, '')
+
+		# smpnet_send_msg(self._sock, MSG.BYE, '')
+		if self.clientProxy:
+			self.clientProxy.bye()
 
 	def force_disconnect(self):
 		'''
 		Forcefully closes the socket if the client hasn't disconnected in time
 		'''
-		if self._sock:
-			self._bye = True
-			self._sock.shutdown(socket.SHUT_RDWR)
-			self._sock.close()
+		LOG.debug('SMPServerClient: force_disconnect()')
+		self.mqLink.stop()
 
+	@snakemq.rpc.as_signal
+	def bye(self):
+		self.mqLink.stop()
 
 	#### NETWORK PROTOCOL HANDLING ####
 
@@ -102,24 +141,24 @@ class SMPServerClient(threading.Thread):
 
 		# Note: MSG.BYE is handled in the receiving loop
 
-		if mhead == MSG.CNAME:
-			LOG.debug('MSG.CNAME received')
-			try:
-				self._pinfo.set_name(msg)
-			except SMPException:
-				self._pinfo.set_name(msg[:255])
-				LOG.warning('Too long player name given. Truncated to 255.')
+# 		if mhead == MSG.CNAME:
+# 			LOG.debug('MSG.CNAME received')
+# 			try:
+# 				self._pinfo.set_name(msg)
+# 			except SMPException:
+# 				self._pinfo.set_name(msg[:255])
+# 				LOG.warning('Too long player name given. Truncated to 255.')
 
-		elif mhead == MSG.REQ_GLIST:
-			LOG.debug('MSG.REQ_GLIST received')
-			self.send_game_info_list()
+# 		elif mhead == MSG.REQ_GLIST:
+# 			LOG.debug('MSG.REQ_GLIST received')
+# 			self.send_game_info_list()
 
-		elif mhead == MSG.REQ_GNEW:
-			LOG.debug('MSG.REQ_GNEW received')
-			gid = self._server.create_game(smp_network.unpack_uint8(msg))
-			self.join_game_handler(gid)
+# 		if mhead == MSG.REQ_GNEW:
+# 			LOG.debug('MSG.REQ_GNEW received')
+# 			gid = self._server.create_game(smp_network.unpack_uint8(msg))
+# 			self.join_game_handler(gid)
 
-		elif mhead == MSG.REQ_GJOIN:
+		if mhead == MSG.REQ_GJOIN:
 			LOG.debug('MSG.REQ_GJOIN received')
 			gid = smp_network.unpack_uint32(msg)
 			self.join_game_handler(gid)
@@ -138,12 +177,24 @@ class SMPServerClient(threading.Thread):
 		else:
 			LOG.critical('Received unhandled message: {}'.format((mhead, dlen, msg)))
 
+	##### RPC FUNCTIONS #####
+	@snakemq.rpc.as_signal
+	def req_glist(self):
+		LOG.debug('SMPServerClient: req_glist()')
+		self.clientProxy.updateGameInfoList(self._server.serialize_game_info_list())
 
+	@snakemq.rpc.as_signal
+	def req_newgame(self, maxPlayers):
+		LOG.debug('SMPServerClient: req_newgame()')
+		gid = self._server.create_game(maxPlayers)
+		self.join_game_handler(gid)
 
-	# PROTOCOL HANDLERS
+	##### OTHER HANDLERS #####
+
 	def join_game_handler(self, gid):
 		LOG.debug('ServClient: Joining game {}'.format(gid))
-		# Check if client is in a game already and respond with that gid
+
+		# Check if the client is in a game already and respond with that gid
 		if self._game != None:
 			self._game.add_player(self)
 
@@ -157,10 +208,6 @@ class SMPServerClient(threading.Thread):
 			else:
 				self._game = None
 				self.notify_gjoin()
-
-
-
-
 
 	# SEND FUNCTIONS
 
@@ -189,13 +236,12 @@ class SMPServerClient(threading.Thread):
 			gid = self._game.get_gid()
 		else:
 			gid = 0
-		smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(gid))
-		LOG.debug('Sent RSP.GJOIN gid={}'.format(gid))
+		# smpnet_send_msg(self._sock, RSP.GJOIN, smp_network.pack_uint32(gid))
+		self.clientProxy.notifyGameJoin(gid)
+		LOG.debug('Called client notifyGameJoin gid={}'.format(gid))
 
 		if gid:
 			self.send_game_state(self._game.serialize_game_state())
-
-
 
 	def send_game_state(self, gs_serial):
 		smpnet_send_msg(self._sock, MSG.GSTATE, gs_serial)
@@ -208,7 +254,6 @@ class SMPServerClient(threading.Thread):
 	def send_board_update(self, b_serial):
 		smpnet_send_msg(self._sock, MSG.GBUPDATE, b_serial)
 		LOG.debug('Sent MSG.GBUPDATE')
-
 
 	def send_game_start(self, starttime):
 		smpnet_send_msg(self._sock, MSG.GSTART, smp_network.pack_uint32(starttime))

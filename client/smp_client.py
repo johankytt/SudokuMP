@@ -20,19 +20,16 @@ class SMPClient():
 	_cname = ''  # Player name
 	_client_net = None
 	_game_state = None  # State of the joined game
-	_game_lock = None
-	_gui = None
 
 	def __init__(self):
 		self._game_lock = threading.Lock()
 		self._gui = SMPClientGui(self)
 		self._gui.show_lobby()
 
-
 	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, cname=''):
 		''' Creates a SMPClientNet object and connects to the server '''
 
-		LOG.info('SMPClient connecting to {} with name {}.'.format((addr, port), cname))
+		LOG.info('SMPClient: connecting to {} with name {}.'.format((addr, port), cname))
 		self.set_cname(cname)
 		if len(self._cname) == 0:
 			LOG.warn('Connecting with no player name set')
@@ -40,13 +37,13 @@ class SMPClient():
 		self._client_net = SMPClientNet(self)
 		try:
 			self._client_net.connect(addr, port)
-			return True
+			LOG.debug('SMPClient: Connect done')
 		except SMPException:
 			self._gui.notify_msgbox_signal.emit('Unable to connect to {}:{}'.format(addr, port))
-			return False
-
+			self._gui.disconnect_signal.emit()
 
 	def disconnect(self, blocking=False):
+		# TODO: document
 		LOG.debug('SMPClient disconnect()')
 		self._client_net.disconnect()
 		with self._game_lock:
@@ -59,8 +56,11 @@ class SMPClient():
 
 		self._cid = 0
 		self._client_net = None
-		self._gui.notify_disconnect()
+		self._gui.disconnect_signal.emit()
 
+	def notify_connect(self):
+		LOG.debug('SMPClient: notify_connect()')
+		self._gui.connect_signal.emit()
 
 	def server_disconnect(self):
 		''' Called if the connection has been closed unexpectedly'''
@@ -71,7 +71,6 @@ class SMPClient():
 		self._gui.notify_msgbox_signal.emit('Connection closed unexpectedly')
 		self._gui.disconnect_signal.emit()
 
-
 	def exit(self):
 		LOG.info('Client exiting.')
 		if self._client_net:
@@ -81,7 +80,6 @@ class SMPClient():
 
 			LOG.info('Disconnecting.')
 			self.disconnect(True)
-
 
 	# Setters / getters
 
@@ -94,7 +92,6 @@ class SMPClient():
 			LOG.warn('Given player name is too long, trucated to 255.')
 			self._cname = cname[:255]
 		self._cname = cname
-
 
 	######### Network Requests #############
 
@@ -118,7 +115,6 @@ class SMPClient():
 
 	def enter_number(self, row, col, value):
 		self._client_net.req_enter_number(row, col, value)
-
 
 	######## Network Notifications ##########
 

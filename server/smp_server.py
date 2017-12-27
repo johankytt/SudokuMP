@@ -11,6 +11,7 @@ import threading
 from server.smp_server_game import SMPServerGame
 from common import smp_network
 
+
 class SMPServer():
 	'''
 	The main SMP server object.
@@ -24,7 +25,6 @@ class SMPServer():
 	_next_gid = 1
 	_game_lock = None  # A thread lock for game related tasks
 
-
 	def __init__(self, laddr=DEFAULT_HOST, lport=DEFAULT_PORT):
 		'''
 		Constructor
@@ -32,13 +32,11 @@ class SMPServer():
 		self._server_net = SMPServerNet(server=self, clist=self._clients, addr=laddr, port=lport)
 		self._game_lock = threading.Lock()
 
-
 	def start(self):
 		'''
 		Configure and start the server
 		'''
 		self._server_net.start()
-
 
 	def client_disconnect(self, client):
 		'''
@@ -46,12 +44,13 @@ class SMPServer():
 		the client has disconnected and the game and client lists
 		need to be cleaned up 
 		'''
+
+		LOG.debug('SMPServer: client_disconnect({})'.format(client))
 		with self._game_lock:
 			if client._game:
 				client._game.remove_player(client)
 		with self._server_net.client_lock:
 			self._clients.remove(client)
-
 
 	###### GAME RELATED FUNCTIONS ######
 
@@ -78,8 +77,6 @@ class SMPServer():
 				if g.get_gid() == gid:
 					return g
 		return None
-
-
 
 	def serialize_game_info_list(self):
 		''' Returns a list of serialised game infos '''

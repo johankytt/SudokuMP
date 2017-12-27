@@ -9,14 +9,13 @@ from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import sys
 
-
 if __name__ == '__main__':
 	LOG.info('Starting SudokuMP server')
 
 	# Set up argument parser
 	parser = ArgumentParser(description="SudokuMP Server", formatter_class=ArgumentDefaultsHelpFormatter)
 	parser.add_argument("-H", "--host", help="IP or Name of the host server", default=DEFAULT_HOST)
-	parser.add_argument("-P", "--port", help="Listening port of the host server", default=DEFAULT_PORT)
+	parser.add_argument("-P", "--port", help="Listening port of the host server", default=DEFAULT_PORT, type=int)
 
 	# Process arguments
 	args = parser.parse_args()

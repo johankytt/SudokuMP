@@ -221,8 +221,10 @@ class SMPServerClient(threading.Thread):
 		LOG.debug('Sent MSG.GSTATE')
 
 	def send_player_update(self, pi_serial):
-		self.clientProxy.updatePlayers(pi_serial)
-		LOG.debug('Sent MSG.GPUPDATE')
+		# The proxy won't be available if the server unexpectedly disconnects
+		if self.clientProxy:
+			self.clientProxy.updatePlayers(pi_serial)
+			LOG.debug('Sent MSG.GPUPDATE')
 
 	def send_board_update(self, b_serial):
 		self.clientProxy.updateGameBoard(b_serial)

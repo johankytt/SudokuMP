@@ -19,18 +19,16 @@ class SMPServer():
 	Manages created games. 
 	'''
 
-	_server_net = None
-	_clients = []
-	_games = []  # Private list of all created game sessions
-	_next_gid = 1
-	_game_lock = None  # A thread lock for game related tasks
-
 	def __init__(self, laddr=DEFAULT_HOST, lport=DEFAULT_PORT):
 		'''
 		Constructor
 		'''
+		self._clients = []
+		self._games = []  # Private list of all created game sessions
+		self._next_gid = 1
+
 		self._server_net = SMPServerNet(server=self, clist=self._clients, addr=laddr, port=lport)
-		self._game_lock = threading.Lock()
+		self._game_lock = threading.RLock()  # A thread lock for game related tasks
 
 	def start(self):
 		'''
@@ -46,7 +44,7 @@ class SMPServer():
 		'''
 
 		LOG.debug('SMPServer: client_disconnect({})'.format(client))
-		with self._game_lock:
+		with self._game_lock:  # TODO:
 			if client._game:
 				client._game.remove_player(client)
 		with self._server_net.client_lock:
@@ -60,7 +58,7 @@ class SMPServer():
 			LOG.debug('SMPServer: New game created, {}'.format(g._gid))
 			self._next_gid += 1
 			self._games.append(g)
-			return g._gid
+			return g.get_gid()
 
 	def remove_game(self, game):
 		LOG.info('Removing game gid={}'.format(game._gid))

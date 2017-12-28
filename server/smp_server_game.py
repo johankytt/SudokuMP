@@ -15,24 +15,18 @@ class SMPServerGame():
 	classdocs
 	'''
 
-	_server = None
-	_gid = 0  # Unique game id
-	_game_state = None  # An instance of SMPGameState
-	_clients = None  # A list of clients who have joined this game
-	_client_lock = None
-
 	def __init__(self, server, gid, max_players):
-		self._server = server
-		self._gid = gid
-		self._game_state = SMPGameState(gid, max_players)
-		self._clients = []
+		self._server = server  # Reference to the main server instance
+		self._gid = gid  # Unique game id
+		self._game_state = SMPGameState(gid, max_players)  # An instance of SMPGameState
+		self._clients = []  # A list of clients who have joined this game
 		self._client_lock = threading.Lock()
 
 	def get_gid(self):
 		return self._gid
 
-
 	############# PLAYER MANAGEMENT ################
+
 	def add_player(self, client):
 		with self._client_lock:
 
@@ -58,7 +52,6 @@ class SMPServerGame():
 				# If all players have joined, start the game
 				if self._game_state.game_full():
 					self._start_game()
-
 
 	def remove_player(self, client):
 		LOG.debug('SMPServerGame: removing player cid={}'.format(client._cid))
@@ -96,7 +89,6 @@ class SMPServerGame():
 	def player_count(self):
 		return len(self._clients)
 
-
 	############# CLIENT UPDATES #############
 
 	def send_player_update(self, client=None):
@@ -114,7 +106,6 @@ class SMPServerGame():
 			for c in self._clients:
 				c.send_player_update(pi_serial)
 
-
 	def send_board_update(self, client=None):
 		'''
 		Send board update to one or all clients.
@@ -130,8 +121,6 @@ class SMPServerGame():
 			for c in self._clients:
 				c.send_board_update(b_serial)
 
-
-
 	############### GAME LOGIC ################
 
 	def _start_game(self):
@@ -145,7 +134,6 @@ class SMPServerGame():
 			for c in self._clients:
 				c.send_game_start(self._game_state._start_time)
 
-
 	def stop_game(self):
 		'''
 		Stops the game and sends notifications to all players.
@@ -156,7 +144,6 @@ class SMPServerGame():
 			self._game_state.set_end_time(time.time())
 			for c in self._clients:
 				c.send_game_end(self._game_state._end_time)
-
 
 	def enter_number(self, client, row, col, value):
 		'''
@@ -188,8 +175,6 @@ class SMPServerGame():
 			self.send_player_update()
 			if self._game_state.get_puzzle().check_solution():
 				self.stop_game()
-
-
 
 	################# SERIALIZATION ################
 

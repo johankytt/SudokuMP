@@ -68,7 +68,7 @@ class SMPServerNet():
 			self.mqLink.loop()
 
 		except KeyboardInterrupt:
-			LOG.info('Keyboard interrupt received. Stopping server.')
+			LOG.info('KEYBOARD INTERRUPT received. Stopping server.')  # Caps for easier finding in server log
 
 		finally:
 			self.disconnect()

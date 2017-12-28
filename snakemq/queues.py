@@ -98,7 +98,7 @@ class Queue(object):
 
         :return: item or None if empty
         """
-        # no need to test TTL because it is filtered in connect()
+        # no need to class_test TTL because it is filtered in connect()
         if self.queue:
             return self.queue[0]
         else:

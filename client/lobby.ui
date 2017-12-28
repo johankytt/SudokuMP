@@ -213,6 +213,13 @@
       </layout>
      </item>
      <item>
+      <widget class="QPushButton" name="findServerButton">
+       <property name="text">
+        <string>Find Server</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="connectButton">
        <property name="enabled">
         <bool>false</bool>

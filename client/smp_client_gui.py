@@ -60,7 +60,9 @@ class SMPClientGui(QObject):
 	def gui_setup(self):
 		self._lobby_gui.portField.setValidator(QIntValidator(1000, 2 ** 16 - 1))
 		self._lobby_gui.maxPlayersField.setValidator(QIntValidator(1, 2 ** 8 - 1))
-		self._lobby_gui.playerNameField.setValidator(QRegExpValidator(QRegExp("[a-zA-Z0-9_]*")))
+		self._lobby_gui.playerNameField.setValidator(
+			QRegExpValidator(QRegExp("[a-zA-Z0-9_]*"))
+		)
 
 		self._lobby_gui.addressField.setText(smp_network.DEFAULT_HOST)
 		self._lobby_gui.portField.setText(str(smp_network.DEFAULT_PORT))
@@ -367,7 +369,8 @@ class SMPClientGui(QObject):
 	def connect_server(self):
 		self._lobby_gui.connectButton.setEnabled(False)
 
-		cname = self._lobby_gui.playerNameField.text()
+		cname = str(self._lobby_gui.playerNameField.text())
+		LOG.debug('GUI: cname: {} type: {}'.format(cname, type(cname)))
 		addr = self._lobby_gui.addressField.text()
 		port = int(self._lobby_gui.portField.text())
 

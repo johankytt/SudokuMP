@@ -87,7 +87,7 @@ class SMPServerNet():
 		clientProxy.reconnect.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 
 		c = SMPServerClient(self._next_cid, self._laddr, self._server)
-		c.set_cname(cname)
+		c.set_cname(str(cname))
 
 		with self.client_lock:
 			self._clients.append(c)

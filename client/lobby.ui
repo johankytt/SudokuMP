@@ -215,7 +215,7 @@
      <item>
       <widget class="QPushButton" name="findServerButton">
        <property name="text">
-        <string>Find Server</string>
+        <string>Start Server Search</string>
        </property>
       </widget>
      </item>

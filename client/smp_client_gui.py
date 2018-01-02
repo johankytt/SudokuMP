@@ -28,6 +28,9 @@ class SMPClientGui(QObject):
 	notify_msgbox_signal = Signal(str)
 	notify_text_signal = Signal(str)
 
+	serverDiscoveryRunningSignal = Signal(bool)
+	serverDiscoveryFoundSignal = Signal(str, int)
+
 	disconnect_signal = Signal()
 	connect_signal = Signal()
 	game_join_signal = Signal(int)
@@ -79,6 +82,8 @@ class SMPClientGui(QObject):
 		self.notify_text_signal.connect(self.show_textnotif)
 		self.disconnect_signal.connect(self.notify_disconnect)
 		self.connect_signal.connect(self.notify_connect)
+		self.serverDiscoveryRunningSignal.connect(self.notify_server_discovery_running)
+		self.serverDiscoveryFoundSignal.connect(self.notify_server_discovery_found)
 		self.game_list_update_signal.connect(self.update_game_list)
 
 		# Lobby window
@@ -88,6 +93,7 @@ class SMPClientGui(QObject):
 
 		self._lobby_gui.connectButton.clicked.connect(self.connect_server)
 		self._lobby_gui.disconnectButton.clicked.connect(self._client.disconnect)
+		self._lobby_gui.findServerButton.clicked.connect(self._client.startStopServerDiscovery)
 
 		self._lobby_gui.refreshGLButton.clicked.connect(self._client.get_game_list)
 		self._lobby_gui.joinGameButton.clicked.connect(self.join_game_clicked)
@@ -126,10 +132,26 @@ class SMPClientGui(QObject):
 		self._lobby_gui.addressField.setEnabled(not state)
 		self._lobby_gui.portField.setEnabled(not state)
 		self._lobby_gui.connectButton.setEnabled(not state)
+		self._lobby_gui.findServerButton.setEnabled(not state)
 		self._lobby_gui.disconnectButton.setEnabled(state)
 		self._lobby_gui.refreshGLButton.setEnabled(state)
 		self._lobby_gui.joinGameButton.setEnabled(state)
 		self._lobby_gui.maxPlayersField.setEnabled(state)
+
+	###### SERVER DISCOVERY ######
+
+	def notify_server_discovery_running(self, isrunning):
+		LOG.debug('GUI server discovery running udpate: {}'.format(isrunning))
+		if isrunning:
+			self._lobby_gui.findServerButton.setText('Stop server search')
+		else:
+			self._lobby_gui.findServerButton.setText('Start server search')
+
+	def notify_server_discovery_found(self, addr, port):
+		LOG.debug('GUI server discovery found update: {}'.format(addr, port))
+		self._lobby_gui.findServerButton.setText('Server found. Click to search again.')
+		self._lobby_gui.addressField.setText(addr)
+		self._lobby_gui.portField.setText(str(port))
 
 	######### EXTERNAL NOTIFICATION RECEIVERS ########
 
@@ -374,7 +396,7 @@ class SMPClientGui(QObject):
 		addr = self._lobby_gui.addressField.text()
 		port = int(self._lobby_gui.portField.text())
 
-		self._client.connect(addr=addr, port=port, cname=cname)
+		self._client.connectServer(addr=addr, port=port, cname=cname)
 # 		if self._client.connect(addr=addr, port=port, cname=cname):
 # 			self.set_connected(True)
 # 			self._lobby_gui.refreshGLButton.clicked.emit()

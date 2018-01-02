@@ -9,9 +9,12 @@ from common.smp_common import LOG, SMPException
 from client.smp_client_gui import SMPClientGui
 from common.smp_game_state import SMPGameState
 import threading
+import socket
+from common.smp_server_discovery import SMPDiscoverySender
+from PySide.QtCore import Signal, QObject
 
 
-class SMPClient():
+class SMPClient(QObject):
 	'''
 	classdocs
 	'''
@@ -21,12 +24,59 @@ class SMPClient():
 	_client_net = None
 	_game_state = None  # State of the joined game
 
+	serverDiscoveryRunningSignal = Signal(bool)
+	serverDiscoveryFoundSignal = Signal(str, int)
+
 	def __init__(self):
+		super(SMPClient, self).__init__()
 		self._game_lock = threading.Lock()
+		self._serverDiscovery = None
+		self._serverFound = False
+		self.serverDiscoveryRunningSignal.connect(self.notifyServerDiscoveryRunning)
+		self.serverDiscoveryFoundSignal.connect(self.notifyServerDiscoveryFound)
 		self._gui = SMPClientGui(self)
 		self._gui.show_lobby()
 
-	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, cname=''):
+	##### SERVER DISCOVERY #####
+
+	def startStopServerDiscovery(self):
+		if self._serverDiscovery and self._serverDiscovery.isRunning():
+			LOG.debug('SMPClient: Stopping server discovery')
+			self._serverDiscovery.stop()
+			self._serverDiscovery.wait()
+			self._serverDiscovery = None
+		else:
+			LOG.debug('SMPClient: Starting server discovery')
+			myaddr = socket.gethostbyname(socket.gethostname())
+			self._serverDiscovery = SMPDiscoverySender((myaddr, 0), self)
+			self._serverDiscovery.start()
+
+	def stopServerDiscovery(self):
+		''' Convenience function for quitting the application '''
+		if self._serverDiscovery and self._serverDiscovery.isRunning():
+			self.startStopServerDiscovery()
+
+	def notifyServerDiscoveryRunning(self, isrunning):
+		''' Notification from the SMPDiscoverySender instance '''
+		if isrunning:
+			LOG.debug('SMPClient: server discovery running')
+			self._serverFound = False
+		else:
+			LOG.debug('SMPClient: server discovery not running')
+			self._serverDiscovery = None
+
+		if not self._serverFound:  # Server found signal does a different gui update
+			self._gui.serverDiscoveryRunningSignal.emit(isrunning)
+
+	def notifyServerDiscoveryFound(self, addr, port):
+		''' Notification from the SMPDiscoverySender instance '''
+		LOG.debug('SMPClient: server found')
+		self._serverFound = True
+		self._gui.serverDiscoveryFoundSignal.emit(addr, port)
+
+	##### NETWORK CONNECTION #####
+
+	def connectServer(self, addr=DEFAULT_HOST, port=DEFAULT_PORT, cname=''):
 		''' Creates a SMPClientNet object and connects to the server '''
 
 		LOG.info('SMPClient: connecting to {} with name {}.'.format((addr, port), cname))
@@ -72,7 +122,11 @@ class SMPClient():
 		self._gui.disconnect_signal.emit()
 
 	def exit(self):
+		''' Called by the QApplication event loop '''
 		LOG.info('Client exiting.')
+		self.stopServerDiscovery()
+
+		# If client is connected, leave game and disconnect
 		if self._client_net:
 			if self._game_state:
 				LOG.info('Leaving game.')

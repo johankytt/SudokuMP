@@ -10,13 +10,14 @@ from client.smp_client import SMPClient
 from PySide import QtGui
 import sys
 
-
 if __name__ == '__main__':
 	LOG.info('Starting SudokuMP client')
 	app = QtGui.QApplication(sys.argv)
 	client = SMPClient()
 
 	app.aboutToQuit.connect(client.exit)
+	client.startStopServerDiscovery()
+
 	app.exec_()
 
 	LOG.info('All done')

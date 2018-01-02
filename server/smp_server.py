@@ -10,6 +10,7 @@ from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 import threading
 from server.smp_server_game import SMPServerGame
 from common import smp_network
+from common.smp_server_discovery import SMPDiscoveryListener
 
 
 class SMPServer():
@@ -32,9 +33,18 @@ class SMPServer():
 
 	def start(self):
 		'''
-		Configure and start the server
+		Run the main loop.
+		This function will return when the server is exiting.
 		'''
-		self._server_net.start()
+		self._serverDiscovery = SMPDiscoveryListener(
+			(self._server_net._laddr, self._server_net._lport), self
+		)
+		LOG.debug('SMPServer: starting server discovery')
+		self._serverDiscovery.start()
+		self._server_net.start()  # Loops infinitely
+		LOG.debug('SMPServer: stopping server discovery')
+		self._serverDiscovery.stop()
+		self._serverDiscovery.wait()
 
 	def client_disconnect(self, client):
 		'''

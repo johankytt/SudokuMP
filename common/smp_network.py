@@ -3,10 +3,11 @@ Created on 9. nov 2017
 
 @author: Johan
 '''
-import struct
+import struct, socket
 from common.smp_common import LOG, SMPSocketClosedException
 
-DEFAULT_HOST = 'localhost'
+# DEFAULT_HOST = 'localhost'
+DEFAULT_HOST = socket.gethostbyname(socket.gethostname())
 DEFAULT_PORT = 22122
 
 MSG_HEADER_LEN = 1
@@ -44,11 +45,12 @@ class RSP():
 	GLIST = 0x80  # Send game list
 	GJOIN = 0x81  # Confirm game joining
 
-
 # Utility functions
+
 
 def pack_int8(num):
 	return struct.pack('>b', num)
+
 
 def unpack_int8(msg):
 	try:
@@ -57,8 +59,10 @@ def unpack_int8(msg):
 		LOG.critical('Unable to unpack int8 from \'{}\''.format(msg))
 		return None
 
+
 def pack_uint8(num):
 	return struct.pack('>B', num)
+
 
 def unpack_uint8(msg):
 	try:
@@ -67,8 +71,10 @@ def unpack_uint8(msg):
 		LOG.critical('Unable to unpack uint8 from \'{}\''.format(msg))
 		return None
 
+
 def pack_uint32(num):
 	return struct.pack('>I', num)
+
 
 def unpack_uint32(msg):
 	try:

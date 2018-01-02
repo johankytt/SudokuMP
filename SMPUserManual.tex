@@ -1,0 +1,81 @@
+\documentclass[a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{parskip}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{todonotes}
+\usepackage{hyperref}
+
+\widowpenalty=10000
+
+\title{SudokuMP User Manual}
+\author{Johan Kütt, A32401}
+\date{November 15, 2017}
+
+\begin{document}
+\maketitle
+
+\section{Installation}
+
+The application is available from https://github.com/johankytt/SudokuMP.
+
+To run the application no special installation procedures are needed. The graphical user interface relies on the PySide library which is freely available both from the web and from package managers. Version 1.2.2 of the library was used for development.
+
+The console logging output is controlled by adjusting \texttt{level=logging.XXX} in \texttt{common/smp\_common.py}. Setting it below INFO for normal use is not recommended as the console will be flooded with large amounts of messages.
+
+
+\section{Running the Server}
+
+The server is a purely command line application. It is started by running the script "start\_server.py". The only configurable options are it's binding address and listening port, which are set as shown in its command line help below. The server process can be exited by issuing Ctrl-C on the command line.
+
+\hrulefill
+
+\texttt{usage: start\_server.py [-h] [-H HOST] [-P PORT]\\
+~\\
+SudokuMP Server\\
+~\\
+optional arguments:\\
+-h, --help            show this help message and exit\\
+-H HOST, --host HOST  IP or Name of the host server (default: localhost)\\
+-P PORT, --port PORT  Listening port of the host server (default: 22122)
+}
+
+\hrulefill
+
+
+\section{Running the Client Application}
+
+The client application is run similarily to the server from the command line by executing \texttt{python start\_client.py}. The client takes no command line arguments.
+
+On opening the application the lobby window will be shown. On the right hand side are the user controls and on the left the server game list which will be populated once a connection is made.
+
+Before a connection is established most controls are disabled to avoid inadvertent clicking.
+
+
+\subsection{Connecting to the server}
+
+To be able to connect to a server, the user must fill out the player name, server address and server port fields. Once that is done the "Connect" button will be enabled and the user can proceed with establishing the connection.
+
+
+\subsection{Joining a game}
+
+Once the connection is established the server game list will be automatically populated with all games currently available on the server. Note, from here on to obtain latest information the list has to be manually refreshed by clicking the corresponding button.
+
+The desired game should be selected from the list and it will be joined by clicking the "Join Game" button.
+
+
+\subsection{Creating a new game}
+
+To create a new game, the desired number of players must be entered on the bottom right of the window and the "Create Game" button clicked.
+
+
+\subsection{Playing the game}
+
+On game join or creation the game window will be shown. On the left hand side is the Sudoku board and on the right game info, including running game duration, player scores and notifications. Clicking the "Leave Game" button on the bottom right will remove the player from the game and take him back to the lobby screen.
+
+Initially the game board will be empty while waiting for other players. Once all required players have joined, the game board will be populated with the initial state and the simultaneous solving of the puzzle can begin.
+
+Number entry mode is entered as usual in tabular applicatons by double clicking, tabbing or hitting enter.
+
+\end{document}

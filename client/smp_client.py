@@ -61,9 +61,11 @@ class SMPClient(QObject):
 		if isrunning:
 			LOG.debug('SMPClient: server discovery running')
 			self._serverFound = False
+			self._gui.status_update_signal.emit('Server discovery running')
 		else:
 			LOG.debug('SMPClient: server discovery not running')
 			self._serverDiscovery = None
+			self._gui.status_update_signal.emit('Server discovery stopped')
 
 		if not self._serverFound:  # Server found signal does a different gui update
 			self._gui.serverDiscoveryRunningSignal.emit(isrunning)
@@ -73,6 +75,7 @@ class SMPClient(QObject):
 		LOG.debug('SMPClient: server found')
 		self._serverFound = True
 		self._gui.serverDiscoveryFoundSignal.emit(addr, port)
+		self._gui.status_update_signal.emit('Server found. Fields updated.')
 
 	##### NETWORK CONNECTION #####
 
@@ -87,6 +90,7 @@ class SMPClient(QObject):
 		self._client_net = SMPClientNet(self)
 		try:
 			self._client_net.connect(addr, port)
+			self._gui.status_update_signal.emit('Trying to connect. Waiting for server response.')
 			LOG.debug('SMPClient: Connect done')
 		except SMPException:
 			self._gui.notify_msgbox_signal.emit('Unable to connect to {}:{}'.format(addr, port))
@@ -107,10 +111,12 @@ class SMPClient(QObject):
 		self._cid = 0
 		self._client_net = None
 		self._gui.disconnect_signal.emit()
+		self._gui.status_update_signal.emit('Disconnected')
 
 	def notify_connect(self):
 		LOG.debug('SMPClient: notify_connect()')
 		self._gui.connect_signal.emit()
+		self._gui.status_update_signal.emit('Connection ok')
 
 	def server_disconnect(self):
 		''' Called if the connection has been closed unexpectedly'''
@@ -134,6 +140,12 @@ class SMPClient(QObject):
 
 			LOG.info('Disconnecting.')
 			self.disconnect(True)
+
+	def notify_poor_connection(self, is_poor):
+		if is_poor:
+			self._gui.status_update_signal.emit('Connection may have dropped')
+		else:
+			self._gui.status_update_signal.emit('Connection ok')
 
 	# Setters / getters
 

@@ -73,6 +73,7 @@ class SMPServerClient(threading.Thread):
 		self.clientProxy.updateGameBoard.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.clientProxy.notifyGameStart.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.clientProxy.notifyGameEnd.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.clientProxy.pong.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 
 	##### UTILITY FUNCTIONS #####
 
@@ -135,6 +136,14 @@ class SMPServerClient(threading.Thread):
 		self.mqLink.stop()
 
 	##### RPC FUNCTIONS #####
+
+	@snakemq.rpc.as_signal
+	def ping(self):
+		'''
+		Responds to client's ping to indicate that the connection
+		is still alive
+		'''
+		self.clientProxy.pong()
 
 	@snakemq.rpc.as_signal
 	def bye(self):

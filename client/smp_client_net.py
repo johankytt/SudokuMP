@@ -10,6 +10,7 @@ from common import smp_network, smp_common
 from common.smp_common import LOG
 from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 from common.smp_game_state import SMPGameState
+from PySide.QtCore import QTimer
 
 
 class SMPClientNet(object):
@@ -24,6 +25,11 @@ class SMPClientNet(object):
 		self._client = client  # Reference to the main client class
 		self._handlerConnection = False  # Indicates if the handler has been connected directly
 		self._bye = False  # Set to True when client initiates disconnect
+
+		self._pongReceived = False
+		self._pingTimer = QTimer()
+		self._pingTimer.setInterval(5000)  # millisec
+		self._pingTimer.timeout.connect(self.pingServer)
 
 	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT,
 			serverId=smp_common.SERVER_ID,
@@ -56,12 +62,12 @@ class SMPClientNet(object):
 		self.mqRpcClient = snakemq.rpc.RpcClient(self.mqReceiveHook)
 		self.serverProxy = self.mqRpcClient.get_proxy(serverId, serverRpcName)
 
+		# Define bye function to allow innterupting connection attempt
+		self.serverProxy.bye.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+
 		LOG.info('Starting network thread.')
 		self.mqThread = threading.Thread(target=self.run)
 		self.mqThread.start()
-
-		# TODO: Handle connection failure. Avoid infinite loop.
-		# raise SMPException('Unable to connect to {}'.format(addr, port))
 
 	@snakemq.rpc.as_signal
 	def reconnect(self, addr, cid):
@@ -90,12 +96,11 @@ class SMPClientNet(object):
 		self.serverProxy.reqGameJoin.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqGameLeave.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 		self.serverProxy.reqNumberEntry.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
+		self.serverProxy.ping.as_signal(smp_common.DEFAULT_MESSAGE_TTL)
 
-		# TODO: Add callbacks
-		# self.mqMessaging.on_disconnect.add(self.serverDisconnect)
-
-		# Update gui
+		# Update gui and start server ping timer
 		self._client.notify_connect()
+		self._pingTimer.start()
 
 	##### MAIN LOOP #####
 
@@ -136,8 +141,26 @@ class SMPClientNet(object):
 		self._bye = True
 
 		# TODO: Check if the client is actually connected
+		self._pingTimer.stop()
 		self.serverProxy.bye()
 		self.mqLink.stop()
+
+	def pingServer(self):
+		# Periodically ping the server to monitor connection status
+		if not self._pongReceived:
+			LOG.debug('Server pong not received')
+			self._client.notify_poor_connection(True)
+
+		LOG.debug('Sending server ping')
+		self._pongReceived = False
+		self.serverProxy.ping()
+
+	@snakemq.rpc.as_signal
+	def pong(self):
+		# Response from server to indicate a good connection
+		LOG.debug('Server pong received')
+		self._pongReceived = True
+		self._client.notify_poor_connection(False)
 
 	@snakemq.rpc.as_signal
 	def bye(self):

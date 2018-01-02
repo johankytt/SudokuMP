@@ -27,6 +27,7 @@ class SMPClientGui(QObject):
 	show_game_signal = Signal()
 	notify_msgbox_signal = Signal(str)
 	notify_text_signal = Signal(str)
+	status_update_signal = Signal(str)
 
 	serverDiscoveryRunningSignal = Signal(bool)
 	serverDiscoveryFoundSignal = Signal(str, int)
@@ -80,6 +81,7 @@ class SMPClientGui(QObject):
 		self.game_join_signal.connect(self.notify_game_joined)
 		self.notify_msgbox_signal.connect(self.show_msgbox)
 		self.notify_text_signal.connect(self.show_textnotif)
+		self.status_update_signal.connect(self.update_status)
 		self.disconnect_signal.connect(self.notify_disconnect)
 		self.connect_signal.connect(self.notify_connect)
 		self.serverDiscoveryRunningSignal.connect(self.notify_server_discovery_running)
@@ -163,6 +165,9 @@ class SMPClientGui(QObject):
 
 	def show_textnotif(self, msg):
 		self._game_gui.notificationsArea.setText(msg)
+
+	def update_status(self, msg):
+		self._lobby_gui.statusLabel.setText('Status: ' + msg)
 
 	def notify_disconnect(self):
 		LOG.debug('GUI received disconnect notification')
@@ -390,6 +395,7 @@ class SMPClientGui(QObject):
 
 	def connect_server(self):
 		self._lobby_gui.connectButton.setEnabled(False)
+		self._lobby_gui.disconnectButton.setEnabled(True)
 
 		cname = str(self._lobby_gui.playerNameField.text())
 		LOG.debug('GUI: cname: {} type: {}'.format(cname, type(cname)))

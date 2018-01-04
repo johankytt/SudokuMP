@@ -28,7 +28,7 @@ class SMPClientNet(object):
 
 		self._pongReceived = False
 		self._pingTimer = QTimer()
-		self._pingTimer.setInterval(5000)  # millisec
+		self._pingTimer.setInterval(smp_common.CLIENT_PING_PERIOD)  # millisec
 		self._pingTimer.timeout.connect(self.pingServer)
 
 	def connect(self, addr=DEFAULT_HOST, port=DEFAULT_PORT,
@@ -118,6 +118,7 @@ class SMPClientNet(object):
 		LOG.info('SMPClientNet: Network thread done. Closing connection.')
 		self.mqLink.stop()  # Just in case
 		self.mqLink.cleanup()
+		self._pingTimer.stop()
 
 		# Avoid cleanup for initial server connection
 		if self._handlerConnection:

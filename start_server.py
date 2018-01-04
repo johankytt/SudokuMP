@@ -8,6 +8,7 @@ from common.smp_common import LOG
 from common.smp_network import DEFAULT_HOST, DEFAULT_PORT
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import sys
+import socket
 
 if __name__ == '__main__':
 	LOG.info('Starting SudokuMP server')
@@ -31,5 +32,12 @@ if __name__ == '__main__':
 		LOG.error('Invalid port specified. Port must be in the range 0-65535.')
 		sys.exit(1)
 
-	server = SMPServer(laddr=args.host, lport=args.port)
-	server.start()
+	try:
+		server = SMPServer(laddr=args.host, lport=args.port)
+		server.start()
+	except socket.error as e:
+		if e.errno == 99:
+			LOG.error('Invalid host address ({}). Unable to bind socket.'\
+				.format(args.host))
+		else:
+			raise

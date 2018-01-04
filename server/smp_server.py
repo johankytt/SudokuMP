@@ -39,10 +39,10 @@ class SMPServer():
 		self._serverDiscovery = SMPDiscoveryListener(
 			(self._server_net._laddr, self._server_net._lport), self
 		)
-		LOG.debug('SMPServer: starting server discovery')
+		LOG.info('Server discovery routine started')
 		self._serverDiscovery.start()
 		self._server_net.start()  # Loops infinitely
-		LOG.debug('SMPServer: stopping server discovery')
+		LOG.debug('Stopping server discovery')
 		self._serverDiscovery.stop()
 		self._serverDiscovery.wait()
 

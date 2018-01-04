@@ -142,7 +142,7 @@ class SMPDiscoveryListener(QThread):
 
 	def stop(self):
 		''' Stops the main loop '''
-		LOG.debug('SMPDiscoverySender: stopping main loop')
+		LOG.info('Stopping server discovery')
 		self.continueListening = False
 		self.socket.sendto('', self.socket.getsockname())  # A bit of a hack to get out of the receive timeout
 
@@ -158,7 +158,8 @@ class SMPDiscoveryListener(QThread):
 			try:
 				pingmsg, caddr = self.socket.recvfrom(WELCOME_LENGTH)
 				LOG.debug('Discovery response received from {}: "{}" len={}'.format(caddr, pingmsg, len(pingmsg)))
-				LOG.info('Server discovery message from {}'.format(caddr))
+				if self.continueListening:
+					LOG.info('Server discovery message from {}'.format(caddr))
 
 				msgAddrPort = decodeDiscoveryMessage(pingmsg)
 				if msgAddrPort[0] is None or msgAddrPort[1] is None:

@@ -7,7 +7,7 @@ Created on 2. nov 2017
 
 # Set up logging
 import logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s (%(threadName)-2s) [%(levelname)s] %(message)s')  # datefmt='%H:%M:%S.'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s (%(threadName)-2s) [%(levelname)s] %(message)s')  # datefmt='%H:%M:%S.'
 LOG = logging.getLogger('SMPLogger')
 
 RPC_EXT = 'RPC'
@@ -17,6 +17,7 @@ CLIENT_HANDLER_ID = 'SMPClientHandler{}'
 CLIENT_HANDLER_RPC_NAME = CLIENT_HANDLER_ID + RPC_EXT
 
 DEFAULT_MESSAGE_TTL = 600  # seconds
+CLIENT_PING_PERIOD = 10000  # ms
 
 
 class SMPException(Exception):

@@ -65,6 +65,9 @@ class SMPServerNet():
 
 		try:
 			LOG.debug('Starting snakemq link loop')
+			LOG.info('Server started. Listening on {}:{}'.format(
+				self._laddr, self._lport
+			))
 			self.mqLink.loop()
 
 		except KeyboardInterrupt:
